@@ -582,3 +582,37 @@
     opacity: 1;
   }
 }
+
+/* ---------- 3D stage layout (see WorkShowcase). Only used when the stage is active. ---------- */
+
+.stage-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms ease;
+  background: radial-gradient(
+    ellipse 60% 70% at 72% 52%,
+    color-mix(in srgb, var(--hue) var(--glow-strength), transparent),
+    transparent 70%
+  );
+}
+
+.stage-glow[data-on="true"] {
+  opacity: 1;
+}
+
+.stage-panel {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  pointer-events: none;
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+.stage-panel[data-active="true"] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}

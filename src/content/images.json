@@ -49,6 +49,21 @@
     "width": 404,
     "height": 876
   },
+  "work/nutritrack-screen-home": {
+    "src": "/work/nutritrack-screen-home.webp",
+    "width": 720,
+    "height": 1617
+  },
+  "work/nutritrack-screen-insights": {
+    "src": "/work/nutritrack-screen-insights.webp",
+    "width": 720,
+    "height": 1617
+  },
+  "work/nutritrack-screen-persona": {
+    "src": "/work/nutritrack-screen-persona.webp",
+    "width": 720,
+    "height": 1617
+  },
   "work/nutritrack-home": {
     "src": "/work/nutritrack-home.webp",
     "width": 640,
