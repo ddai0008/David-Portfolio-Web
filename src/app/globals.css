@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/*
+  Paper and Cobalt, kept restrained. Surfaces are paper and ink. Blue appears only on
+  links, focus and selection; colour in the page comes from the work, not the chrome.
+  Add tokens here, never hard-code colours in components.
+*/
+:root {
+  color-scheme: light;
+  --paper: #fbfbfd;
+  --paper-raised: #ffffff;
+  --ink: #1d1d1f;
+  --ink-muted: #6e6e73;
+  --hairline: #d2d2d7;
+  --link: #0066cc;
+  --accent: #0071e3;
+}
+
+/* Follows the system unless a theme is chosen explicitly via data-theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #000000;
+    --paper-raised: #1d1d1f;
+    --ink: #f5f5f7;
+    --ink-muted: #a1a1a6;
+    --hairline: #424245;
+    --link: #2997ff;
+    --accent: #2997ff;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #000000;
+  --paper-raised: #1d1d1f;
+  --ink: #f5f5f7;
+  --ink-muted: #a1a1a6;
+  --hairline: #424245;
+  --link: #2997ff;
+  --accent: #2997ff;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+  --color-link: var(--link);
+  --color-accent: var(--accent);
+  /* System fonts first, so it renders as SF Pro on Apple devices and native UI elsewhere. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter,
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+a {
+  color: var(--link);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
