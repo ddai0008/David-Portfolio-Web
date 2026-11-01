@@ -1,4 +1,8 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
+
+const resumeFile = path.join(process.cwd(), "public", "David_Dai_Resume.pdf");
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -44,6 +48,14 @@ test("offers the résumé download and the contact links", async ({ page }) => {
     "href",
     "https://github.com/ddai0008",
   );
+});
+
+// The PDF is added to public/ separately (see the README), so this only runs once it exists.
+test("serves the résumé as a PDF", async ({ request }) => {
+  test.skip(!existsSync(resumeFile), "public/David_Dai_Resume.pdf has not been added yet");
+  const response = await request.get("/David_Dai_Resume.pdf");
+  expect(response.ok()).toBe(true);
+  expect(response.headers()["content-type"]).toContain("application/pdf");
 });
 
 test("opens external links safely", async ({ page }) => {

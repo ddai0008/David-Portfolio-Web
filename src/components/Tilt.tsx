@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 // Leans its children a few degrees towards the pointer. The transform itself lives in CSS
@@ -17,6 +17,9 @@ export function Tilt({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
+
+  // A pending animation frame must not outlive the component.
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (event.pointerType !== "mouse") return;
