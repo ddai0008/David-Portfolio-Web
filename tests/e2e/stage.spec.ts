@@ -26,6 +26,19 @@ async function jumpTo(page: Page, id: string) {
   }, id);
 }
 
+// Clicking a link scrolls smoothly, so the active project flips well before the page stops. Wait
+// until the anchor sits under the bar (scroll-padding-top: 4rem) before measuring anything else.
+async function landedOn(page: Page, id: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (target) => Math.round(document.getElementById(target)?.getBoundingClientRect().top ?? NaN),
+        id,
+      ),
+    )
+    .toBe(64);
+}
+
 // Only the panel's own title, not the heading inside its detail sheet.
 const activeTitle = (page: Page) =>
   page.locator('#work article[data-active="true"] h3[id$="-title"]');
@@ -107,12 +120,14 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
     await jumpTo(page, "probudget");
     const projects = page.getByRole("navigation", { name: "Projects" });
     await projects.getByRole("link", { name: "NutriTrack" }).click();
+    await landedOn(page, "nutritrack");
     await expect(activeTitle(page)).toHaveText("NutriTrack");
     await expect(projects.getByRole("link", { name: "NutriTrack" })).toHaveAttribute(
       "aria-current",
       "location",
     );
     await projects.getByRole("link", { name: "ProBudget" }).click();
+    await landedOn(page, "probudget");
     await expect(activeTitle(page)).toHaveText("ProBudget");
   });
 
