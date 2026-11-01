@@ -1,0 +1,134 @@
+# Copy to .github/workflows/claude-review.yml. Reviews PRs you open or update (read-only job: T0-T2).
+# Same variables and secrets as claude.yml.
+# The runner context (runner.temp) only exists inside steps, so paths under it are set per step.
+name: claude-review
+on:
+  pull_request: { types: [opened, synchronize, ready_for_review] }
+permissions: { contents: read }
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    # Kill switch first (`agent kill --github <repo>` sets AGENT_ENABLED=false and no new run starts),
+    # then owner-only, and never on fork PRs (they get no secrets, and their content is untrusted).
+    if: >-
+      vars.AGENT_ENABLED != 'false' &&
+      github.actor == vars.AGENT_OWNER &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      AGENT_MODE: ci
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1"
+      # Fork subagents are on by default in SDK sessions since SDK 0.3.302; off until evaluated (ADR 0013).
+      CLAUDE_CODE_FORK_SUBAGENT: "0"
+      # Claude Code strips credentials from every subprocess (hooks, MCP servers, commands); ADR 0009.
+      CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - id: agent-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ vars.AGENT_REPO_NAME }}
+          permission-contents: read
+      - id: agent-checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ vars.AGENT_REPO }}
+          ref: ${{ vars.AGENT_REF || 'main' }}
+          token: ${{ steps.agent-token.outputs.token }}
+          path: .agent-src
+          persist-credentials: false
+      - run: mv .agent-src "$RUNNER_TEMP/agent"
+      # The agent's plugin, hooks, generated settings and scripts are read-only for the rest of the job
+      # (the policy also denies any write, move or delete under $RUNNER_TEMP/agent).
+      - run: chmod -R a-w "$RUNNER_TEMP/agent"
+      # The job's model and fallback from config/models.yaml in the agent checkout (AGENT_REF), so no model is
+      # hard-coded here. Only allow-listed model IDs reach the outputs; anything else falls back to the job's default.
+      - id: model
+        run: node "$RUNNER_TEMP/agent/scripts/ci/resolve-model.mjs" review
+      # Review needs to read code and post one comment review: nothing else.
+      - id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: read
+          permission-pull-requests: write
+      # The OS sandbox (ADR 0009). The runner image has neither bubblewrap nor socat, and Ubuntu 24.04's
+      # AppArmor blocks the user namespaces bubblewrap needs. Without them Claude Code would run every
+      # command unsandboxed, with the job's tokens in its environment and no network allowlist; the
+      # committed settings make it refuse instead, and the last line checks the sandbox works here.
+      - id: sandbox
+        name: OS sandbox prerequisites
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends bubblewrap socat
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          bwrap --ro-bind / / --dev /dev --proc /proc --unshare-user --unshare-pid true
+      - id: claude
+        uses: anthropics/claude-code-action@db77d4d3c98f3f6380e7cd45ffba2342a3dbde3c # v1.0.254
+        env:
+          # No claude.ai connectors (the owner's account-level MCP servers) in the run; settings.generated.json
+          # also sets disableClaudeAiConnectors.
+          ENABLE_CLAUDEAI_MCP_SERVERS: "false"
+          # Read by the policy hooks: where each tool call's audit line is written.
+          AGENT_AUDIT_DIR: ${{ runner.temp }}/agent-audit
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          settings: ${{ runner.temp }}/agent/plugin/settings.generated.json
+          # Not a widening (ADR 0009): the job's `if:` already admits only the owner. It switches the
+          # action to its hardened mode: the token stays out of .git/config (a credential helper reads
+          # GH_TOKEN, which sandboxed commands never get) and Claude Code scrubs credentials from every
+          # subprocess (CLAUDE_CODE_SUBPROCESS_ENV_SCRUB).
+          allowed_non_write_users: ${{ vars.AGENT_OWNER }}
+          prompt: "Use the review-pr skill to review pull request #${{ github.event.pull_request.number }} in this repository."
+          claude_args: >-
+            --plugin-dir ${{ runner.temp }}/agent/plugin
+            --model ${{ steps.model.outputs.model }} --fallback-model ${{ steps.model.outputs.fallback }}
+            --max-turns 30
+      - if: always()
+        run: |
+          record="$RUNNER_TEMP/agent/scripts/ci-run-record.mjs"
+          if [ -f "$record" ]; then exec node "$record" "${{ steps.claude.outputs.execution_file }}"; fi
+          # No agent checkout, so no run record. Say which step failed first, instead of crashing with MODULE_NOT_FOUND.
+          first=""
+          for s in $AGENT_STEP_OUTCOMES; do case "$s" in *=failure) first="${s%%=*}"; break;; esac; done
+          echo "::error::There is no agent checkout, so no run record. First failed step: ${first:-none, an earlier step was skipped}. Its error is in that step's log above; agent init --verify reads it and names the cause."
+          case "$first" in
+            agent-token)
+              echo "::error::That step could not create the GitHub App token for the agent repo. If its log says 'Invalid keyData', APP_PRIVATE_KEY is cut off. Fix: gh secret set APP_PRIVATE_KEY --repo $GITHUB_REPOSITORY < path/to/app-private-key.pem (the whole .pem file)."
+              echo "::error::If its log says 'Not Found', the App is not installed on $AGENT_REPO. Fix: install it with access to $AGENT_REPO and $GITHUB_REPOSITORY." ;;
+            agent-checkout)
+              echo "::error::That step could not check out $AGENT_REPO at ${AGENT_REF:-main}. Fix: check the variables AGENT_REPO and AGENT_REF, and that the App can read the agent repo." ;;
+          esac
+          if [ "$AGENT_TOKEN_SET" = "false" ]; then echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or missing. Fix: run claude setup-token, then gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo $GITHUB_REPOSITORY and paste the token (pressing Enter alone sets an empty secret)."; fi
+          exit 1
+        env:
+          # Which setup step failed first, and whether the token secret is set (a flag, never the value), so a
+          # missing agent checkout or an empty token is named instead of crashing or hiding.
+          AGENT_STEP_OUTCOMES: "agent-token=${{ steps.agent-token.outcome }} agent-checkout=${{ steps.agent-checkout.outcome }} model=${{ steps.model.outcome }} app-token=${{ steps.app-token.outcome }} sandbox=${{ steps.sandbox.outcome }} claude=${{ steps.claude.outcome }}"
+          AGENT_REPO: ${{ vars.AGENT_REPO }}
+          AGENT_REF: ${{ vars.AGENT_REF }}
+          AGENT_TOKEN_SET: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+          # The settings file passed to the action above, and the prerequisites step's result (ADR 0009).
+          AGENT_SETTINGS_FILE: ${{ runner.temp }}/agent/plugin/settings.generated.json
+          # The model the run was given, so the record can say whether it ran on it.
+          AGENT_MODEL_REQUESTED: ${{ steps.model.outputs.model }}
+          AGENT_SANDBOX_PREREQS: ${{ steps.sandbox.outcome }}
+          AGENT_JOB: review
+          AGENT_AUDIT_DIR: ${{ runner.temp }}/agent-audit
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: agent-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent-audit/
+          retention-days: 90
+          if-no-files-found: warn
