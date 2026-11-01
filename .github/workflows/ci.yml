@@ -1,0 +1,36 @@
+# Builds the site and runs lint, typecheck and the Playwright checks on every PR and on main.
+# The workflow name must stay exactly "CI": claude-ci-triage.yml listens for failed runs of it.
+# No secrets are used, so this is safe to run on fork PRs.
+name: CI
+on:
+  pull_request:
+  push: { branches: [main] }
+permissions: { contents: read }
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      # pnpm comes from the packageManager field in package.json through corepack, so its version lives in
+      # one place. It has to be on the PATH before setup-node for the pnpm cache to work.
+      - run: corepack enable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
