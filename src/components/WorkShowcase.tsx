@@ -166,9 +166,10 @@ function FlatLayout({ projects }: { projects: ShowcaseProject[] }) {
   });
 }
 
-// A tall track with one screen of scroll per project. The stage is pinned to the viewport for
-// the length of the track while the devices take turns; the empty anchors keep in-page links
-// such as #mymichlin landing on the right project.
+// A track exactly one screen tall per project. The stage is pinned to the viewport until the
+// track's bottom edge reaches the viewport's bottom (count - 1 screens of scroll, which is what
+// sceneProgress assumes), then scrolls away with the track so the next section is never drawn
+// under it. The empty anchors keep in-page links such as #mymichlin landing on the right project.
 function StageLayout({
   projects,
   Stage,
@@ -202,8 +203,8 @@ function StageLayout({
   }, [count]);
 
   return (
-    <div ref={track} className="relative">
-      <div className="sticky top-0 h-svh overflow-hidden" style={{ marginBottom: "-100svh" }}>
+    <div ref={track} className="relative" style={{ height: `${count * 100}svh` }}>
+      <div className="sticky top-0 h-svh overflow-hidden">
         {projects.map(({ id, hue }, index) => (
           <div
             key={id}
@@ -254,8 +255,14 @@ function StageLayout({
         </ol>
       </div>
 
-      {projects.map(({ id }) => (
-        <div key={id} id={id} aria-hidden="true" style={{ height: "100svh" }} />
+      {projects.map(({ id }, index) => (
+        <div
+          key={id}
+          id={id}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0"
+          style={{ top: `${index * 100}svh`, height: "100svh" }}
+        />
       ))}
     </div>
   );
