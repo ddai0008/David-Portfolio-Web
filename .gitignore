@@ -1,0 +1,3 @@
+# Ignore all files in the .context directory (Conversation Memory and Context)
+.context/*
+CLAUDE.md
