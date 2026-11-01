@@ -27,7 +27,7 @@ Next.js 16 (App Router) as a static export, React 19, TypeScript, Tailwind 4, Pl
 ## Content
 - The résumé PDF is the source of truth, not the old site (the old site's GPA 3.64 / WAM 81 is outdated; current is 3.70 / 82.1).
 - Lead with an engineer who ships and leads. Primary action is downloading the résumé PDF.
-- Public on the page: email, LinkedIn, GitHub, GPA/WAM, Agencia Change as capstone client, Student Ambassador role. Never on the page: phone number, city, retail roles (PDF only), student ID.
+- Public on the page: email, LinkedIn, GitHub, GPA/WAM, Agencia Change as capstone client, Student Ambassador role. Never on the page: phone number, city, retail roles, student ID. The PDF may carry the phone number, city and retail roles; David is fine with that.
 - Check every screenshot before use: some show a student ID, phone numbers, UAT environment labels, junk test text or real names (picks and exclusions are in `.context/decisions.md`). Agencia Change's product owner approved showing the product with mock data only; never show real client data.
 - Prefer numbers to adjectives (about 30,000 records, 100% precision on a 100-record audit). Keep dates current: available from December 2026, capstone Aug 2026 to present.
 
@@ -41,4 +41,4 @@ Next.js 16 (App Router) as a static export, React 19, TypeScript, Tailwind 4, Pl
 ## Do not change
 - `.github/`, `.claude/` and this file are CODEOWNERS-protected (David reviews). Edit only when asked.
 - `.context/` is local memory and never committed. The old site under `.context/previous-portfolio/` is reference only.
-- The résumé PDF content. The PDF is not in the repo: the repo is public and the PDF prints the phone number and city, so David decides whether to commit it as `public/David_Dai_Resume.pdf` (the page already links there). Generated output (`.next/`, `out/`) and `pnpm-lock.yaml` edits by hand.
+- The résumé PDF content (`public/David_Dai_Resume.pdf`, the file the download buttons serve). Generated output (`.next/`, `out/`) and `pnpm-lock.yaml` edits by hand.

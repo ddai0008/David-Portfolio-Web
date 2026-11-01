@@ -11,8 +11,6 @@ import sharp from "sharp";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const asset = (...parts) => path.join(root, ".context", "asset", ...parts);
-const live = (...parts) =>
-  path.join(root, ".context", "previous-portfolio", "live-assets", "Image", ...parts);
 
 // `crop` is in source pixels, `width` is the output width (never upscaled past the crop).
 const jobs = [
@@ -74,11 +72,11 @@ const jobs = [
     width: 640,
   },
 
-  // About: cropped tight so the lectern crest and the rest of the room stay out of frame.
+  // About: the headshot, cropped to 4:5 with the empty wall above the head trimmed.
   {
     out: "about/david",
-    src: live("aboutme", "david_presentation.jpg"),
-    crop: { left: 1250, top: 700, width: 1060, height: 850 },
+    src: asset("About", "headshot.jpg"),
+    crop: { left: 400, top: 340, width: 1763, height: 2204 },
     width: 1000,
   },
 ];
