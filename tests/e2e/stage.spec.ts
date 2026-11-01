@@ -103,6 +103,43 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
     await expect(activeTitle(page)).toHaveText("NutriTrack");
   });
 
+  await test.step("lets go at the end of the track instead of covering the next section", async () => {
+    const measure = () =>
+      page.evaluate(() => {
+        const stage = document.querySelector("#work .sticky");
+        const track = stage?.parentElement;
+        const next = document.getElementById("education");
+        if (!stage || !track || !next) throw new Error("stage layout not found");
+        return {
+          trackBottom: track.getBoundingClientRect().bottom,
+          stageTop: stage.getBoundingClientRect().top,
+          stageBottom: stage.getBoundingClientRect().bottom,
+          nextTop: next.getBoundingClientRect().top,
+          height: window.innerHeight,
+        };
+      });
+    const scrollBy = (top: number) =>
+      page.evaluate((dy) => window.scrollBy({ top: dy, behavior: "instant" }), top);
+
+    // With the track's bottom edge level with the window's bottom, the last scene is still on
+    // stage and the stage fills the window exactly.
+    const start = await measure();
+    await scrollBy(start.trackBottom - start.height);
+    const end = await measure();
+    expect(end.stageTop).toBeCloseTo(0, 0);
+    expect(end.stageBottom).toBeCloseTo(end.height, 0);
+    await expect(activeTitle(page)).toHaveText("NutriTrack");
+
+    // Scrolling on carries the stage away with the track. It must never be drawn over the
+    // section that follows it.
+    for (const distance of [200, 400, 400, 400]) {
+      await scrollBy(distance);
+      const after = await measure();
+      expect(after.stageBottom).toBeCloseTo(after.trackBottom, 0);
+      expect(after.stageBottom).toBeLessThanOrEqual(after.nextTop + 1);
+    }
+  });
+
   expect(problems).toEqual([]);
 });
 
