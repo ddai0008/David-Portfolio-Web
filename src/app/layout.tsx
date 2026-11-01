@@ -6,7 +6,15 @@ import "./globals.css";
 // other platform gets Inter instead of whatever the OS happens to ship (Segoe UI, Roboto,
 // DejaVu), so the tight display tracking is tuned against one font rather than five. The
 // optical-size axis switches large headings to Inter's tighter display cut.
-const inter = Inter({ subsets: ["latin"], axes: ["opsz"], variable: "--font-inter" });
+// "optional" means Inter is used only if it is ready at first paint (the preload usually makes
+// that so, and it is cached after). Otherwise the system font stays for that visit. Swapping late
+// would reflow the whole page by ~180px, and the scroll-driven stage must not move under the reader.
+const inter = Inter({
+  subsets: ["latin"],
+  axes: ["opsz"],
+  variable: "--font-inter",
+  display: "optional",
+});
 
 export const metadata: Metadata = {
   title: "David Dai — Software Engineer",
