@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import sharp from "sharp";
+import { NAV_OFFSET } from "../../src/components/stage/progress";
 
 // The 3D stage only runs on wide screens with motion allowed and WebGL 2, so these specs use a
 // desktop viewport and switch motion back on. WebGL is software-rendered in CI, which is slow,
@@ -27,7 +28,8 @@ async function jumpTo(page: Page, id: string) {
 }
 
 // Clicking a link scrolls smoothly, so the active project flips well before the page stops. Wait
-// until the anchor sits under the bar (scroll-padding-top: 4rem) before measuring anything else.
+// until the anchor sits under the bar (NAV_OFFSET, which matches scroll-padding-top) before
+// measuring anything else.
 async function landedOn(page: Page, id: string) {
   await expect
     .poll(() =>
@@ -36,7 +38,7 @@ async function landedOn(page: Page, id: string) {
         id,
       ),
     )
-    .toBe(64);
+    .toBe(NAV_OFFSET);
 }
 
 // Only the panel's own title, not the heading inside its detail sheet.

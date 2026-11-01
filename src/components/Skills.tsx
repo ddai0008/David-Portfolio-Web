@@ -21,7 +21,7 @@ export function Skills() {
             >
               <div className="reveal grid gap-3 py-8 md:grid-cols-12 md:gap-10 md:py-10">
                 <h3 className="title md:col-span-4">{group.label}</h3>
-                <ul className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.125rem,2.2vw,1.5rem)] leading-snug tracking-[-0.015em] text-ink-muted md:col-span-8">
+                <ul role="list" className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.125rem,2.2vw,1.5rem)] leading-snug tracking-[-0.015em] text-ink-muted md:col-span-8">
                   {group.items.map((item) => (
                     <li key={item} className="whitespace-nowrap">
                       {item}
