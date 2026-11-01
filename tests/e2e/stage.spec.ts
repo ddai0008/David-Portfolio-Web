@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import sharp from "sharp";
 
 // The 3D stage only runs on wide screens with motion allowed and WebGL 2, so these specs use a
 // desktop viewport and switch motion back on. WebGL is software-rendered in CI, which is slow,
@@ -51,6 +52,21 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
     const box = await page.locator("#work canvas").boundingBox();
     expect(box?.width).toBeGreaterThan(1000);
     expect(box?.height).toBeGreaterThan(600);
+  });
+
+  await test.step("a device is actually drawn on it", async () => {
+    // The glow behind the stage is a smooth gradient; a drawn device adds hard edges and a lit
+    // screen, which shows up as a large spread in pixel values over the device's half of the page.
+    await expect
+      .poll(
+        async () => {
+          const shot = await page.screenshot({ clip: { x: 720, y: 150, width: 640, height: 600 } });
+          const { channels } = await sharp(shot).stats();
+          return channels[0].stdev;
+        },
+        { timeout: 30_000 },
+      )
+      .toBeGreaterThan(25);
   });
 
   await test.step("the project in front follows the scroll", async () => {
