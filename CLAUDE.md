@@ -12,7 +12,7 @@ Résumé and portfolio site for David Dai, a graduating Monash IT & Business stu
 - `pnpm images` rebuilds the web-ready images in `public/` and `src/content/images.json` from the raw captures in `.context/asset/`. Commit the outputs; the raw files never leave `.context/`.
 
 ## Stack
-Next.js 16 (App Router) as a static export, React 19, TypeScript, Tailwind 4, Playwright with axe. Not installed yet: react-three-fiber for the 3D stage and Motion for animation. Hosted on Vercel (not connected yet).
+Next.js 16 (App Router) as a static export, React 19, TypeScript, Tailwind 4, Playwright with axe. three and react-three-fiber drive the 3D stage. Motion is not installed (animation is CSS). Hosted on Vercel (not connected yet).
 - Next 16 is newer than most training data. Read the matching guide in `node_modules/next/dist/docs/` before writing Next code (see `AGENTS.md`).
 - Static export means no Server Actions, cookies, rewrites, redirects, headers, ISR or the default image optimiser. `cacheComponents` is deliberately off.
 
@@ -35,7 +35,8 @@ Next.js 16 (App Router) as a static export, React 19, TypeScript, Tailwind 4, Pl
 - Branches are `<type>/<slug>` (`feat/`, `fix/`, `chore/`, `docs/`), for example `chore/agent-setup`. Commit subjects are imperative sentences, no prefix.
 - Work goes through a PR to `main`; do not push to `main`. The `claude-review` workflow reviews non-draft PRs.
 - `claude-ci-triage` only fires when a workflow named exactly `CI` fails. `.github/workflows/ci.yml` is that workflow (lint, typecheck, build, Playwright); keep the name. Pin actions by commit SHA with a version comment, like the existing workflows.
-- Layout: `src/app/` holds routes and `globals.css` (colour and font tokens, type scale, CSS device frames, motion), `src/components/` the page sections and UI, `src/content/` site facts (`site.ts`) and the generated image manifest, `scripts/` the image script, `tests/e2e/` the Playwright specs, `public/` static files. Record new top-level folders here.
+- Layout: `src/app/` holds routes and `globals.css` (colour and font tokens, type scale, CSS device frames, motion), `src/components/` the page sections and UI (`stage/` is the lazy-loaded 3D scene and its procedural devices), `src/content/` site facts (`site.ts`) and the generated image manifest, `scripts/` the image script, `tests/e2e/` the Playwright specs, `public/` static files. Record new top-level folders here.
+- The 3D stage (`WorkShowcase` + `stage/`) is an enhancement: it loads only on screens at least 768px wide with WebGL 2, motion allowed and no data saver, and swaps in while the section is off screen. Everything else keeps the flat layout, which must always tell the whole story. Playwright runs with reduced motion by default (flat layout); `stage.spec.ts` turns motion on.
 - Motion is CSS first: entrances use scroll-driven `animation-timeline: view()` and only run when `prefers-reduced-motion` allows. Do not put an animation on an element whose opacity or transform another rule also sets (the animation wins).
 
 ## Do not change

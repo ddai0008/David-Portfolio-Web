@@ -55,6 +55,26 @@ const jobs = [
   { out: "work/mymichlin-dashboard", src: asset("MyMichlin", "Dashboard.png") },
   { out: "work/mymichlin-search", src: asset("MyMichlin", "Seach Result.png") },
 
+  // NutriTrack screens without the baked-in Android frame, for the 3D phone to wear its own.
+  {
+    out: "work/nutritrack-screen-home",
+    src: asset("NutriTrack", "Screenshot_20261101_170202.png"),
+    crop: { left: 57, top: 62, width: 1076, height: 2416 },
+    width: 720,
+  },
+  {
+    out: "work/nutritrack-screen-insights",
+    src: asset("NutriTrack", "Screenshot_20261101_170214.png"),
+    crop: { left: 57, top: 62, width: 1076, height: 2416 },
+    width: 720,
+  },
+  {
+    out: "work/nutritrack-screen-persona",
+    src: asset("NutriTrack", "Screenshot_20261101_170053.png"),
+    crop: { left: 57, top: 62, width: 1076, height: 2416 },
+    width: 720,
+  },
+
   // NutriTrack: the Android frame is baked into the capture.
   {
     out: "work/nutritrack-home",
