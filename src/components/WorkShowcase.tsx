@@ -258,7 +258,7 @@ function StageLayout({
                     className={`block h-1.5 rounded-full transition-all duration-500 ${
                       active === index
                         ? "w-7 bg-ink"
-                        : "w-1.5 bg-ink-muted opacity-60 group-hover:opacity-100"
+                        : "w-1.5 bg-ink-muted group-hover:bg-ink"
                     }`}
                   />
                 </a>

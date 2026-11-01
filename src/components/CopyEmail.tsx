@@ -10,7 +10,7 @@ const canCopy = () => typeof navigator.clipboard?.writeText === "function";
 // in-app browsers), so it can never be a dead button.
 export function CopyEmail({ email }: { email: string }) {
   const available = useSyncExternalStore(subscribe, canCopy, () => false);
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -23,20 +23,26 @@ export function CopyEmail({ email }: { email: string }) {
         type="button"
         className="btn btn-secondary"
         onClick={async () => {
+          // The browser can refuse (permission denied, or the page lacks focus), so say so.
+          let next: "copied" | "failed" = "copied";
           try {
             await navigator.clipboard.writeText(email);
           } catch {
-            return;
+            next = "failed";
           }
-          setCopied(true);
+          setState(next);
           clearTimeout(timer.current);
-          timer.current = setTimeout(() => setCopied(false), 2200);
+          timer.current = setTimeout(() => setState("idle"), 2200);
         }}
       >
-        {copied ? "Copied" : "Copy email"}
+        {state === "copied" ? "Copied" : state === "failed" ? "Couldn’t copy" : "Copy email"}
       </button>
       <span role="status" className="sr-only">
-        {copied ? "Email address copied" : ""}
+        {state === "copied"
+          ? "Email address copied"
+          : state === "failed"
+            ? "Could not copy. Select the address above instead."
+            : ""}
       </span>
     </>
   );
