@@ -102,15 +102,17 @@ function StudioLight() {
 function Rig({
   track,
   count,
+  onLost,
 }: {
   track: RefObject<HTMLElement | null>;
   count: number;
+  onLost: () => void;
 }) {
   const scene = useRef<SceneState>({ s: 0, px: 0, py: 0 });
   const viewport = useThree((state) => state.viewport);
-  const laptop = useScreens(laptopScreens);
-  const iphone = useScreens(iphoneScreens);
-  const android = useScreens(androidScreens);
+  const laptop = useScreens(laptopScreens, onLost);
+  const iphone = useScreens(iphoneScreens, onLost);
+  const android = useScreens(androidScreens, onLost);
 
   // Devices fill about 60% of the stage height and sit right of centre, clear of the text.
   const { width, height } = viewport;
@@ -176,7 +178,7 @@ export default function Stage3D({
         });
       }}
     >
-      <Rig track={track} count={count} />
+      <Rig track={track} count={count} onLost={onLost} />
     </Canvas>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ComponentType, ReactNode, RefObject } from "react";
 import type { Hue } from "@/content/site";
 import { vars } from "./css";
@@ -44,6 +44,15 @@ function canStage() {
   return hasWebGL();
 }
 
+// Re-evaluated whenever the window crosses the width breakpoint or the motion preference changes.
+function subscribeToEligibility(onChange: () => void) {
+  const queries = [matchMedia("(min-width: 768px)"), matchMedia("(prefers-reduced-motion: reduce)")];
+  for (const query of queries) query.addEventListener("change", onChange);
+  return () => {
+    for (const query of queries) query.removeEventListener("change", onChange);
+  };
+}
+
 class StageBoundary extends Component<
   { onError: () => void; children: ReactNode },
   { failed: boolean }
@@ -62,14 +71,19 @@ class StageBoundary extends Component<
 
 export function WorkShowcase({ projects }: { projects: ShowcaseProject[] }) {
   const root = useRef<HTMLDivElement>(null);
+  // False on the server and during hydration, so the first client render matches the HTML.
+  const eligible = useSyncExternalStore(subscribeToEligibility, canStage, () => false);
   const [Stage, setStage] = useState<ComponentType<StageProps> | null>(null);
-  const [mode, setMode] = useState<"flat" | "stage">("flat");
+  const [swapped, setSwapped] = useState(false);
   const [failed, setFailed] = useState(false);
+  const staged = eligible && swapped && !failed && Stage !== null;
+  // Stable, because the 3D scene reloads its textures if this changes.
+  const giveUp = useCallback(() => setFailed(true), []);
 
   // Fetch the 3D code only when the section is a screen or two away, so it never competes with
   // the first paint.
   useEffect(() => {
-    if (Stage || failed || !canStage()) return;
+    if (!eligible || Stage || failed) return;
     const node = root.current;
     if (!node) return;
     let cancelled = false;
@@ -92,41 +106,35 @@ export function WorkShowcase({ projects }: { projects: ShowcaseProject[] }) {
       cancelled = true;
       observer.disconnect();
     };
-  }, [Stage, failed]);
+  }, [eligible, Stage, failed]);
 
-  // Swap layouts only while the section is off screen, so nothing moves under the reader.
+  // Swap layouts only while the section is below the viewport. The two layouts differ in height,
+  // so swapping while it is on screen, or above the reader, would shift the page under them. A
+  // reader who is already past the section simply keeps the flat layout.
   useEffect(() => {
-    if (!Stage || failed || mode === "stage") return;
+    if (!eligible || !Stage || failed || swapped) return;
     const node = root.current;
     if (!node) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting && canStage()) setMode("stage");
+      if (!entry.isIntersecting && entry.boundingClientRect.top > 0) setSwapped(true);
     });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [Stage, failed, mode]);
+  }, [eligible, Stage, failed, swapped]);
 
-  // Drop back to the flat layout if the window narrows or motion is switched off.
+  // If the stage goes away while it is being read (the window narrowed, motion was switched
+  // off, or the scene failed), put the reader back at the start of the section.
+  const wasStaged = useRef(false);
   useEffect(() => {
-    if (mode !== "stage") return;
-    const queries = [matchMedia("(min-width: 768px)"), matchMedia("(prefers-reduced-motion: reduce)")];
-    const check = () => {
-      if (!canStage()) setMode("flat");
-    };
-    for (const query of queries) query.addEventListener("change", check);
-    return () => {
-      for (const query of queries) query.removeEventListener("change", check);
-    };
-  }, [mode]);
-
-  function giveUp() {
-    setFailed(true);
-    setMode("flat");
-  }
+    if (wasStaged.current && !staged) {
+      root.current?.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+    wasStaged.current = staged;
+  }, [staged]);
 
   return (
     <div ref={root}>
-      {mode === "stage" && Stage ? (
+      {staged && Stage ? (
         <StageLayout projects={projects} Stage={Stage} onFail={giveUp} />
       ) : (
         <FlatLayout projects={projects} />

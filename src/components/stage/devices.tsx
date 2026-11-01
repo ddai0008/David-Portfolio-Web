@@ -88,7 +88,10 @@ function roundedRect(width: number, height: number, radius: number) {
 
 // Loads screen images as textures. They arrive one by one, so a device shows a dark screen for
 // a moment rather than blocking the whole scene.
-export function useScreens(urls: readonly string[]): (THREE.Texture | null)[] {
+export function useScreens(
+  urls: readonly string[],
+  onError: () => void,
+): (THREE.Texture | null)[] {
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
   const [textures, setTextures] = useState<(THREE.Texture | null)[]>(() => urls.map(() => null));
@@ -98,23 +101,31 @@ export function useScreens(urls: readonly string[]): (THREE.Texture | null)[] {
     const loader = new THREE.TextureLoader();
     const made: THREE.Texture[] = [];
     urls.forEach((url, index) => {
-      loader.load(url, (texture) => {
-        if (cancelled) {
-          texture.dispose();
-          return;
-        }
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = gl.capabilities.getMaxAnisotropy();
-        made.push(texture);
-        setTextures((previous) => previous.map((old, i) => (i === index ? texture : old)));
-        invalidate();
-      });
+      loader.load(
+        url,
+        (texture) => {
+          if (cancelled) {
+            texture.dispose();
+            return;
+          }
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = gl.capabilities.getMaxAnisotropy();
+          made.push(texture);
+          setTextures((previous) => previous.map((old, i) => (i === index ? texture : old)));
+          invalidate();
+        },
+        undefined,
+        // A device with a blank screen is worse than the flat page, so give up on the stage.
+        () => {
+          if (!cancelled) onError();
+        },
+      );
     });
     return () => {
       cancelled = true;
       for (const texture of made) texture.dispose();
     };
-  }, [urls, gl, invalidate]);
+  }, [urls, gl, invalidate, onError]);
 
   return textures;
 }
