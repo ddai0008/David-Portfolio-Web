@@ -1,0 +1,72 @@
+{
+  "work/agencia-details": {
+    "src": "/work/agencia-details.webp",
+    "width": 1800,
+    "height": 918
+  },
+  "work/agencia-versions": {
+    "src": "/work/agencia-versions.webp",
+    "width": 1010,
+    "height": 586
+  },
+  "work/agencia-matrix": {
+    "src": "/work/agencia-matrix.webp",
+    "width": 870,
+    "height": 720
+  },
+  "work/probudget-transactions": {
+    "src": "/work/probudget-transactions.webp",
+    "width": 1080,
+    "height": 675
+  },
+  "work/probudget-add": {
+    "src": "/work/probudget-add.webp",
+    "width": 900,
+    "height": 762
+  },
+  "work/mymichlin-splash": {
+    "src": "/work/mymichlin-splash.webp",
+    "width": 404,
+    "height": 876
+  },
+  "work/mymichlin-onboarding-1": {
+    "src": "/work/mymichlin-onboarding-1.webp",
+    "width": 404,
+    "height": 876
+  },
+  "work/mymichlin-onboarding-2": {
+    "src": "/work/mymichlin-onboarding-2.webp",
+    "width": 404,
+    "height": 876
+  },
+  "work/mymichlin-dashboard": {
+    "src": "/work/mymichlin-dashboard.webp",
+    "width": 404,
+    "height": 876
+  },
+  "work/mymichlin-search": {
+    "src": "/work/mymichlin-search.webp",
+    "width": 404,
+    "height": 876
+  },
+  "work/nutritrack-home": {
+    "src": "/work/nutritrack-home.webp",
+    "width": 640,
+    "height": 1352
+  },
+  "work/nutritrack-insights": {
+    "src": "/work/nutritrack-insights.webp",
+    "width": 640,
+    "height": 1352
+  },
+  "work/nutritrack-persona": {
+    "src": "/work/nutritrack-persona.webp",
+    "width": 640,
+    "height": 1352
+  },
+  "about/david": {
+    "src": "/about/david.webp",
+    "width": 1000,
+    "height": 802
+  }
+}

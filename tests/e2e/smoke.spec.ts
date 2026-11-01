@@ -16,7 +16,8 @@ test("home page renders without console errors", async ({ page }) => {
 });
 
 // Contrast depends on which token set applies, so check the system schemes and the manual
-// data-theme override (which wins over the system) in both directions.
+// data-theme override (which wins over the system) in both directions. Motion is off so that
+// scroll-driven entrances cannot leave text half transparent while it is scanned.
 const themes = [
   { name: "light", colorScheme: "light", dataTheme: undefined },
   { name: "dark", colorScheme: "dark", dataTheme: undefined },
@@ -24,15 +25,31 @@ const themes = [
   { name: "dark override on a light system", colorScheme: "light", dataTheme: "dark" },
 ] as const;
 
-for (const { name, colorScheme, dataTheme } of themes) {
-  test(`has no accessibility violations (${name})`, async ({ page }) => {
-    await page.emulateMedia({ colorScheme });
+test.describe("accessibility", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  for (const { name, colorScheme, dataTheme } of themes) {
+    test(`has no violations (${name})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.goto("/");
+      if (dataTheme) {
+        await page.evaluate((theme) => {
+          document.documentElement.dataset.theme = theme;
+        }, dataTheme);
+      }
+
+      const { violations } = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(violations).toEqual([]);
+    });
+  }
+
+  test("has no violations with a detail sheet open", async ({ page }) => {
     await page.goto("/");
-    if (dataTheme) {
-      await page.evaluate((theme) => {
-        document.documentElement.dataset.theme = theme;
-      }, dataTheme);
-    }
+    await page.locator("#probudget").getByRole("button", { name: "Details" }).click();
+    await expect(page.getByRole("dialog", { name: "ProBudget" })).toBeVisible();
 
     const { violations } = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -40,4 +57,4 @@ for (const { name, colorScheme, dataTheme } of themes) {
 
     expect(violations).toEqual([]);
   });
-}
+});
