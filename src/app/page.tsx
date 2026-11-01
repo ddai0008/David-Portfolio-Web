@@ -1,16 +1,29 @@
-// Placeholder while the site is rebuilt; the real page replaces this.
+import { About } from "@/components/About";
+import { Contact } from "@/components/Contact";
+import { Credentials } from "@/components/Credentials";
+import { Footer } from "@/components/Footer";
+import { Hero } from "@/components/Hero";
+import { Impact } from "@/components/Impact";
+import { Leadership } from "@/components/Leadership";
+import { Nav } from "@/components/Nav";
+import { Skills } from "@/components/Skills";
+import { Work } from "@/components/Work";
+
 export default function Home() {
   return (
-    <main className="grid flex-1 place-items-center px-6 py-24">
-      <div className="max-w-3xl">
-        <h1 className="text-[clamp(3rem,11vw,7rem)] leading-none font-semibold tracking-tight">
-          David Dai
-        </h1>
-        <p className="mt-6 text-xl text-ink-muted sm:text-2xl">
-          Software engineer who ships — and leads.
-        </p>
-        <p className="mt-10 text-sm text-ink-muted">The full site is being rebuilt.</p>
-      </div>
-    </main>
+    <>
+      <Nav />
+      <main id="main" className="overflow-x-clip">
+        <Hero />
+        <Leadership />
+        <Impact />
+        <Work />
+        <Credentials />
+        <Skills />
+        <About />
+        <Contact />
+      </main>
+      <Footer />
+    </>
   );
 }

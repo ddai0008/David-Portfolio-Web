@@ -8,12 +8,28 @@
 :root {
   color-scheme: light;
   --paper: #fbfbfd;
+  --paper-alt: #f5f5f7;
   --paper-raised: #ffffff;
   --ink: #1d1d1f;
   --ink-muted: #6e6e73;
   --hairline: #d2d2d7;
   --link: #0066cc;
   --accent: #0071e3;
+
+  /* Device bodies for the CSS frames around the project screens. */
+  --device: #1d1d1f;
+  --device-edge: #48484a;
+
+  /* Each project brings its own colour. They only ever appear as soft glows behind its art. */
+  --hue-agencia: #1fa89a;
+  --hue-agencia-2: #b6e04a;
+  --hue-probudget: #2f6bff;
+  --hue-mymichlin: #ff5a52;
+  --hue-nutritrack: #ff9a1f;
+  /* The availability dot. Decorative, never carries text. */
+  --signal: #1fa89a;
+
+  --glow-strength: 32%;
 }
 
 /* Follows the system unless a theme is chosen explicitly via data-theme. */
@@ -21,60 +37,530 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --paper: #000000;
+    --paper-alt: #0b0b0d;
     --paper-raised: #1d1d1f;
     --ink: #f5f5f7;
     --ink-muted: #a1a1a6;
     --hairline: #424245;
     --link: #2997ff;
     --accent: #2997ff;
+    --device: #2c2c2e;
+    --device-edge: #636366;
+    --glow-strength: 40%;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
   --paper: #000000;
+  --paper-alt: #0b0b0d;
   --paper-raised: #1d1d1f;
   --ink: #f5f5f7;
   --ink-muted: #a1a1a6;
   --hairline: #424245;
   --link: #2997ff;
   --accent: #2997ff;
+  --device: #2c2c2e;
+  --device-edge: #636366;
+  --glow-strength: 40%;
 }
 
 @theme inline {
   --color-paper: var(--paper);
+  --color-paper-alt: var(--paper-alt);
   --color-paper-raised: var(--paper-raised);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-hairline: var(--hairline);
   --color-link: var(--link);
   --color-accent: var(--accent);
+  --color-device: var(--device);
+  --color-signal: var(--signal);
   /* System fonts first, so it renders as SF Pro on Apple devices and native UI elsewhere. */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter,
     system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-body {
-  background: var(--paper);
+/* In the base layer so Tailwind utilities (text-ink, no-underline...) can override these. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Anchor jumps land below the fixed nav. */
+    scroll-padding-top: 4rem;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: var(--link);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* Keep the page from scrolling behind an open sheet. */
+  body:has(dialog[open]) {
+    overflow: hidden;
+  }
+}
+
+/* ---------- Type scale. One idea per screen, said big. ---------- */
+
+@utility display {
+  font-size: clamp(3.5rem, 11vw, 8rem);
+  line-height: 0.95;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+@utility headline {
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 1.04;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+@utility title {
+  font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
+
+@utility lede {
+  font-size: clamp(1.1875rem, 2vw, 1.5rem);
+  line-height: 1.4;
+  letter-spacing: -0.012em;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+@utility eyebrow {
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+@utility wrap {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: max(1.25rem, env(safe-area-inset-left));
+}
+
+/* ---------- Buttons: ink pills. Blue is for links only. ---------- */
+
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: 999px;
+  font-size: 1.0625rem;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+@utility btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  &:hover {
+    transform: scale(1.03);
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@utility btn-secondary {
+  background: transparent;
   color: var(--ink);
-  font-family: var(--font-sans);
+  border: 1px solid var(--hairline);
+  &:hover {
+    border-color: var(--ink-muted);
+  }
 }
 
-a {
-  color: var(--link);
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  color: var(--ink-muted);
+  white-space: nowrap;
 }
 
-::selection {
-  background: color-mix(in srgb, var(--accent) 25%, transparent);
+@utility sr-only-focusable {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.625rem 1rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  &:focus {
+    top: 0.75rem;
+  }
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+/* ---------- Navigation ---------- */
+
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.nav::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1px;
+  background: var(--hairline);
+  opacity: 0;
+}
+
+/* ---------- Theme toggle: the icon is picked in CSS so it never mismatches on hydration. ---------- */
+
+.theme-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-sun {
+  display: block;
+}
+:root[data-theme="dark"] .theme-moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-sun {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .theme-moon {
+    display: none;
+  }
+}
+
+/* ---------- Project scenes ---------- */
+
+/* A soft pool of the project's own colour behind its art. */
+.glow {
+  position: absolute;
+  inset: -12% -8%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      closest-side at 42% 52%,
+      color-mix(in srgb, var(--hue) var(--glow-strength), transparent),
+      transparent
+    ),
+    radial-gradient(
+      closest-side at 68% 38%,
+      color-mix(in srgb, var(--hue-2, var(--hue)) calc(var(--glow-strength) * 0.7), transparent),
+      transparent
+    );
+}
+
+.stage {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ---------- CSS device frames ---------- */
+
+.display-frame {
+  position: relative;
+  padding: clamp(0.4rem, 1vw, 0.7rem);
+  border-radius: clamp(0.75rem, 1.6vw, 1.25rem);
+  background: var(--device);
+  box-shadow:
+    inset 0 0 0 1px var(--device-edge),
+    0 2px 6px color-mix(in srgb, var(--ink) 8%, transparent),
+    0 40px 80px -24px color-mix(in srgb, var(--ink) 38%, transparent);
+}
+
+.display-frame > img,
+.laptop-frame > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+}
+
+.laptop-frame {
+  position: relative;
+  padding: clamp(0.35rem, 0.9vw, 0.6rem);
+  border-radius: clamp(0.75rem, 1.4vw, 1.1rem) clamp(0.75rem, 1.4vw, 1.1rem) 0 0;
+  background: var(--device);
+  box-shadow: inset 0 0 0 1px var(--device-edge);
+}
+
+.laptop-base {
+  position: relative;
+  height: clamp(0.5rem, 1.2vw, 0.85rem);
+  margin-inline: -4%;
+  border-radius: 0 0 1.25rem 1.25rem / 0 0 0.9rem 0.9rem;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--device) 70%, var(--paper-raised)),
+    var(--device)
+  );
+  box-shadow: 0 30px 50px -18px color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+.laptop-base::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 16%;
+  height: 40%;
+  transform: translateX(-50%);
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: color-mix(in srgb, var(--device) 60%, var(--hairline));
+}
+
+.display-stand {
+  width: 14%;
+  height: clamp(1.5rem, 4vw, 3rem);
+  margin-inline: auto;
+  background: linear-gradient(to bottom, var(--device-edge), var(--device));
+  clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+}
+
+.display-foot {
+  width: 26%;
+  height: clamp(0.3rem, 0.6vw, 0.5rem);
+  margin-inline: auto;
+  border-radius: 999px;
+  background: var(--device);
+}
+
+.phone-frame {
+  position: relative;
+  padding: clamp(0.3rem, 0.7vw, 0.5rem);
+  border-radius: clamp(1.9rem, 4vw, 2.9rem);
+  background: var(--device);
+  box-shadow:
+    inset 0 0 0 1px var(--device-edge),
+    0 30px 60px -20px color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+.phone-frame > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: clamp(1.6rem, 3.4vw, 2.5rem);
+}
+
+.phone-frame::after {
+  content: "";
+  position: absolute;
+  top: clamp(0.65rem, 1.4vw, 1rem);
+  left: 50%;
+  width: 28%;
+  height: clamp(0.5rem, 1.1vw, 0.8rem);
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--device);
+}
+
+/* ---------- Detail sheet (native dialog) ---------- */
+
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: min(100%, 52rem);
+  max-width: 100%;
+  max-height: min(92dvh, 56rem);
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-bottom: 0;
+  border-radius: 1.75rem 1.75rem 0 0;
+  background: var(--paper-raised);
+  color: var(--ink);
+  overflow: hidden;
+  box-shadow: 0 -30px 80px -30px color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+.sheet::backdrop {
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+@media (min-width: 48rem) {
+  .sheet {
+    inset: 0;
+    margin: auto;
+    border-bottom: 1px solid var(--hairline);
+    border-radius: 1.75rem;
+  }
+}
+
+.sheet-scroll {
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ---------- Motion. Everything below is gated on the user allowing it. ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes word-up {
+    from {
+      transform: translateY(110%);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  @keyframes drift {
+    from {
+      transform: translateY(var(--drift, 3.5rem));
+    }
+    to {
+      transform: translateY(calc(var(--drift, 3.5rem) * -1));
+    }
+  }
+
+  @keyframes nav-line {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal) 55%, transparent);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 0.5rem transparent;
+    }
+  }
+
+  @keyframes sheet-up {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+    }
+  }
+
+  /* Page-load entrance for the hero, staggered with --i. */
+  .hero-in {
+    animation: rise 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 110ms + 120ms);
+  }
+
+  .word-mask {
+    display: inline-block;
+    overflow: hidden;
+    /* Room for descenders so the mask does not clip them. */
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
+  }
+
+  .word-mask > span {
+    display: inline-block;
+    animation: word-up 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 90ms + 80ms);
+  }
+
+  .signal-dot {
+    animation: pulse-ring 2.4s ease-out infinite;
+  }
+
+  .sheet[open] {
+    animation: sheet-up 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* Scroll-driven effects. Browsers without view timelines simply show the content. */
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 4% entry 42%;
+    }
+
+    .drift {
+      animation: drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+
+    .nav::after {
+      animation: nav-line linear both;
+      animation-timeline: scroll();
+      animation-range: 0 5rem;
+    }
+  }
+
+  /* Pointer tilt, driven by the Tilt component. Only on devices that can hover. */
+  @media (hover: hover) {
+    .tilt {
+      transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+      transition: transform 260ms ease-out;
+      will-change: transform;
+    }
+    .tilt[data-active="true"] {
+      transition: transform 60ms linear;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {
@@ -82,5 +568,17 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* The nav hairline stays visible when scroll-driven animation is off or unsupported. */
+@media (prefers-reduced-motion: reduce) {
+  .nav::after {
+    opacity: 1;
+  }
+}
+@supports not (animation-timeline: scroll()) {
+  .nav::after {
+    opacity: 1;
   }
 }
