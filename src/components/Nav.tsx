@@ -1,4 +1,5 @@
-import { navLinks, person } from "@/content/site";
+import { person } from "@/content/site";
+import { NavLinks } from "./NavLinks";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function Nav() {
@@ -13,18 +14,7 @@ export function Nav() {
         </a>
 
         <nav aria-label="Sections" className="hidden md:block">
-          <ul className="flex items-center gap-9">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  className="text-sm text-ink-muted no-underline transition-colors hover:text-ink"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <NavLinks />
         </nav>
 
         <div className="flex items-center gap-1.5">

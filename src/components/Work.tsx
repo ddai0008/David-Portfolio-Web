@@ -55,7 +55,7 @@ type ProjectInput = {
 };
 
 function project({ id, hue, art, ...copy }: ProjectInput): ShowcaseProject {
-  return { id, hue, art, copy: <Copy id={id} {...copy} /> };
+  return { id, hue, art, label: copy.title, copy: <Copy id={id} {...copy} /> };
 }
 
 function Fact({ children }: { children: ReactNode }) {

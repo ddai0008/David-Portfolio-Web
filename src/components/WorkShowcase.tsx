@@ -9,6 +9,8 @@ import { sceneOffset, sceneProgress } from "./stage/progress";
 export type ShowcaseProject = {
   id: string;
   hue: Hue;
+  // The project's name, for the stage's progress links.
+  label: string;
   // The words and buttons, and the 2D picture. The same nodes serve both layouts.
   copy: ReactNode;
   art: ReactNode;
@@ -241,18 +243,29 @@ function StageLayout({
           </div>
         </div>
 
-        <ol
-          className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 gap-2.5"
-          aria-hidden="true"
-        >
-          {projects.map(({ id }, index) => (
-            <li
-              key={id}
-              className="h-1.5 rounded-full bg-ink transition-all duration-500"
-              style={{ width: active === index ? "1.75rem" : "0.375rem", opacity: active === index ? 1 : 0.25 }}
-            />
-          ))}
-        </ol>
+        {/* Progress, and a way to jump: the pinned stage hides how much is left to scroll. */}
+        <nav aria-label="Projects" className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
+          <ol className="flex items-center">
+            {projects.map(({ id, label }, index) => (
+              <li key={id}>
+                <a
+                  href={`#${id}`}
+                  aria-label={label}
+                  aria-current={active === index ? "location" : undefined}
+                  className="group grid h-9 min-w-9 place-items-center"
+                >
+                  <span
+                    className={`block h-1.5 rounded-full transition-all duration-500 ${
+                      active === index
+                        ? "w-7 bg-ink"
+                        : "w-1.5 bg-ink-muted opacity-60 group-hover:opacity-100"
+                    }`}
+                  />
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
       </div>
 
       {projects.map(({ id }, index) => (

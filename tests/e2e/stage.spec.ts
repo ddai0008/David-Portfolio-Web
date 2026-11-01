@@ -103,6 +103,19 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
     await expect(activeTitle(page)).toHaveText("NutriTrack");
   });
 
+  await test.step("the progress links jump between projects", async () => {
+    await jumpTo(page, "probudget");
+    const projects = page.getByRole("navigation", { name: "Projects" });
+    await projects.getByRole("link", { name: "NutriTrack" }).click();
+    await expect(activeTitle(page)).toHaveText("NutriTrack");
+    await expect(projects.getByRole("link", { name: "NutriTrack" })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
+    await projects.getByRole("link", { name: "ProBudget" }).click();
+    await expect(activeTitle(page)).toHaveText("ProBudget");
+  });
+
   await test.step("lets go at the end of the track instead of covering the next section", async () => {
     const measure = () =>
       page.evaluate(() => {

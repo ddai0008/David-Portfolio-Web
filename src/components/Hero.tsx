@@ -24,7 +24,7 @@ export function Hero() {
           </h1>
 
           <p
-            className="hero-in mt-7 max-w-3xl text-[clamp(1.5rem,3.8vw,2.75rem)] leading-[1.12] font-semibold tracking-[-0.03em] text-balance text-ink-muted"
+            className="hero-in mt-7 max-w-3xl text-[clamp(1.5rem,3.8vw,2.75rem)] leading-[1.12] font-semibold tracking-[-0.022em] text-balance text-ink-muted"
             style={vars({ "--i": 3 })}
           >
             Software engineer who ships — and leads.

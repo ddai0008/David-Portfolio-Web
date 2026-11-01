@@ -17,7 +17,7 @@ export function Impact() {
         <dl className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:mt-24 md:grid-cols-2">
           {impact.map((stat) => (
             <div key={stat.figure} className="reveal bg-paper-alt px-7 py-10 md:px-12 md:py-14">
-              <dt className="text-[clamp(3.25rem,9vw,6.5rem)] leading-none font-bold tracking-[-0.05em] tabular-nums">
+              <dt className="text-[clamp(3.25rem,9vw,6.5rem)] leading-none font-bold tracking-[-0.04em] tabular-nums">
                 {stat.figure}
               </dt>
               <dd className="mt-5 max-w-sm text-[1.0625rem] leading-relaxed text-ink-muted">
