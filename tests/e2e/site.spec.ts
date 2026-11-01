@@ -57,6 +57,18 @@ test("copies the email address", async ({ page, context }) => {
   );
 });
 
+test("says so when the browser refuses to copy", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: () => Promise.reject(new Error("denied")) },
+      configurable: true,
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Copy email" }).click();
+  await expect(page.getByRole("button", { name: "Couldn’t copy" })).toBeVisible();
+});
+
 test("has its own icon rather than the framework default", async ({ page, request }) => {
   await page.goto("/");
   const hrefs = await page
