@@ -7,9 +7,9 @@ export function About() {
         <div className="reveal md:col-span-5">
           <Shot
             name="about/david"
-            alt="David presenting in front of a whiteboard in a lecture theatre."
+            alt="Portrait of David Dai in a dark suit and tie."
             sizes="(min-width: 768px) 480px, 100vw"
-            className="w-full rounded-3xl"
+            className="mx-auto w-full max-w-sm rounded-3xl md:max-w-none"
           />
         </div>
 
