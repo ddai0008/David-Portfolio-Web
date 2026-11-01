@@ -8,7 +8,7 @@ Résumé and portfolio site for David Dai, a graduating Monash IT & Business stu
 - Setup: Node 24 via nvm (non-interactive shells need `source ~/.nvm/nvm.sh`), `corepack enable` once for pnpm, then `pnpm install`.
 - `pnpm dev` runs the dev server, `pnpm build` writes the static site to `out/`, `pnpm preview` serves `out/`.
 - `pnpm lint` and `pnpm typecheck` (runs `next typegen` first).
-- Test: `pnpm build && pnpm test:e2e` (Playwright smoke and axe accessibility, light and dark, desktop and mobile). It serves `out/`, so build first. Once per machine: `pnpm exec playwright install chromium`.
+- Test: `pnpm build && pnpm test:e2e` (Playwright smoke and axe accessibility, light and dark including the `data-theme` override, desktop and mobile). It serves `out/`, so build first. Once per machine: `pnpm exec playwright install chromium`.
 
 ## Stack
 Next.js 16 (App Router) as a static export, React 19, TypeScript, Tailwind 4, Playwright with axe. Not installed yet: react-three-fiber for the 3D stage and Motion for animation. Hosted on Vercel (not connected yet).

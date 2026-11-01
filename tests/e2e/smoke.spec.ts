@@ -15,11 +15,24 @@ test("home page renders without console errors", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
-// Both colour schemes are checked, since contrast depends on which tokens apply.
-for (const colorScheme of ["light", "dark"] as const) {
-  test(`has no accessibility violations (${colorScheme})`, async ({ page }) => {
+// Contrast depends on which token set applies, so check the system schemes and the manual
+// data-theme override (which wins over the system) in both directions.
+const themes = [
+  { name: "light", colorScheme: "light", dataTheme: undefined },
+  { name: "dark", colorScheme: "dark", dataTheme: undefined },
+  { name: "light override on a dark system", colorScheme: "dark", dataTheme: "light" },
+  { name: "dark override on a light system", colorScheme: "light", dataTheme: "dark" },
+] as const;
+
+for (const { name, colorScheme, dataTheme } of themes) {
+  test(`has no accessibility violations (${name})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme });
     await page.goto("/");
+    if (dataTheme) {
+      await page.evaluate((theme) => {
+        document.documentElement.dataset.theme = theme;
+      }, dataTheme);
+    }
 
     const { violations } = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
