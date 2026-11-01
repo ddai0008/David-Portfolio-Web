@@ -11,7 +11,7 @@
   --paper-alt: #f5f5f7;
   --paper-raised: #ffffff;
   --ink: #1d1d1f;
-  --ink-muted: #6e6e73;
+  --ink-muted: #636366;
   --hairline: #d2d2d7;
   --link: #0066cc;
   --accent: #0071e3;
@@ -76,9 +76,10 @@
   --color-accent: var(--accent);
   --color-device: var(--device);
   --color-signal: var(--signal);
-  /* System fonts first, so it renders as SF Pro on Apple devices and native UI elsewhere. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter,
-    system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* SF Pro on Apple devices, Inter (loaded in layout.tsx) everywhere else. The system fonts after
+     it only show if the web font fails to load. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    var(--font-inter), system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 
@@ -122,14 +123,14 @@
   font-size: clamp(3.5rem, 11vw, 8rem);
   line-height: 0.95;
   font-weight: 700;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.034em;
 }
 
 @utility headline {
   font-size: clamp(2.25rem, 6vw, 4.5rem);
   line-height: 1.04;
   font-weight: 650;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.026em;
   text-wrap: balance;
 }
 
@@ -137,14 +138,14 @@
   font-size: clamp(1.75rem, 3.4vw, 2.75rem);
   line-height: 1.1;
   font-weight: 650;
-  letter-spacing: -0.028em;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 @utility lede {
   font-size: clamp(1.1875rem, 2vw, 1.5rem);
   line-height: 1.4;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.01em;
   color: var(--ink-muted);
   text-wrap: pretty;
 }

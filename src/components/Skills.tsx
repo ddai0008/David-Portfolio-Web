@@ -1,6 +1,6 @@
 import { skills } from "@/content/site";
 
-// Skills as typography: each group is a large label with its tools set as running text, not a
+// Skills as typography: each group is a large label with its tools set as plain words, not a
 // table or a wall of icons. Hovering a group quietly dims the others.
 export function Skills() {
   return (
@@ -21,21 +21,13 @@ export function Skills() {
             >
               <div className="reveal grid gap-3 py-8 md:grid-cols-12 md:gap-10 md:py-10">
                 <h3 className="title md:col-span-4">{group.label}</h3>
-                <p className="text-[clamp(1.125rem,2.2vw,1.5rem)] leading-snug tracking-[-0.015em] text-ink-muted md:col-span-8">
-                  {group.items.map((item, index) => (
-                    <span key={item}>
+                <ul role="list" className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.125rem,2.2vw,1.5rem)] leading-snug tracking-[-0.015em] text-ink-muted md:col-span-8">
+                  {group.items.map((item) => (
+                    <li key={item} className="whitespace-nowrap">
                       {item}
-                      {index < group.items.length - 1 && (
-                        <>
-                          <span className="mx-[0.1em] text-hairline" aria-hidden="true">
-                            ·
-                          </span>
-                          <span className="sr-only">,</span>{" "}
-                        </>
-                      )}
-                    </span>
+                    </li>
                   ))}
-                </p>
+                </ul>
               </div>
             </li>
           ))}

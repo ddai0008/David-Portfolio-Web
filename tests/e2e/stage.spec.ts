@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import sharp from "sharp";
+import { NAV_OFFSET } from "../../src/components/stage/progress";
 
 // The 3D stage only runs on wide screens with motion allowed and WebGL 2, so these specs use a
 // desktop viewport and switch motion back on. WebGL is software-rendered in CI, which is slow,
@@ -24,6 +25,20 @@ async function jumpTo(page: Page, id: string) {
   await page.evaluate((target) => {
     document.getElementById(target)?.scrollIntoView({ behavior: "instant" });
   }, id);
+}
+
+// Clicking a link scrolls smoothly, so the active project flips well before the page stops. Wait
+// until the anchor sits under the bar (NAV_OFFSET, which matches scroll-padding-top) before
+// measuring anything else.
+async function landedOn(page: Page, id: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (target) => Math.round(document.getElementById(target)?.getBoundingClientRect().top ?? NaN),
+        id,
+      ),
+    )
+    .toBe(NAV_OFFSET);
 }
 
 // Only the panel's own title, not the heading inside its detail sheet.
@@ -101,6 +116,21 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
       .getByRole("link", { name: /Source on GitHub/ })
       .focus();
     await expect(activeTitle(page)).toHaveText("NutriTrack");
+  });
+
+  await test.step("the progress links jump between projects", async () => {
+    await jumpTo(page, "probudget");
+    const projects = page.getByRole("navigation", { name: "Projects" });
+    await projects.getByRole("link", { name: "NutriTrack" }).click();
+    await landedOn(page, "nutritrack");
+    await expect(activeTitle(page)).toHaveText("NutriTrack");
+    await expect(projects.getByRole("link", { name: "NutriTrack" })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
+    await projects.getByRole("link", { name: "ProBudget" }).click();
+    await landedOn(page, "probudget");
+    await expect(activeTitle(page)).toHaveText("ProBudget");
   });
 
   await test.step("lets go at the end of the track instead of covering the next section", async () => {

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -46,6 +47,39 @@ test("offers the résumé download and the contact links", async ({ page }) => {
   );
 });
 
+test("copies the email address", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Copy email" }).click();
+  await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    "daviddaicareer@gmail.com",
+  );
+});
+
+test("says so when the browser refuses to copy", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: () => Promise.reject(new Error("denied")) },
+      configurable: true,
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Copy email" }).click();
+  await expect(page.getByRole("button", { name: "Couldn’t copy" })).toBeVisible();
+});
+
+test("has its own icon rather than the framework default", async ({ page, request }) => {
+  await page.goto("/");
+  const hrefs = await page
+    .locator('link[rel~="icon"], link[rel="apple-touch-icon"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+  expect(hrefs.length).toBeGreaterThanOrEqual(3);
+  for (const href of hrefs) {
+    expect((await request.get(href)).ok(), href).toBe(true);
+  }
+});
+
 test("serves the résumé as a PDF", async ({ request }) => {
   const response = await request.get("/David_Dai_Resume.pdf");
   expect(response.ok()).toBe(true);
@@ -70,7 +104,7 @@ test("in-page links point at sections that exist", async ({ page }) => {
   }
 });
 
-test("does not scroll sideways or clip text off the edge", async ({ page }) => {
+async function expectNoSidewaysOverflow(page: Page) {
   await page.goto("/");
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -94,6 +128,16 @@ test("does not scroll sideways or clip text off the edge", async ({ page }) => {
     return found;
   });
   expect(clipped).toEqual([]);
+}
+
+test("does not scroll sideways or clip text off the edge", async ({ page }) => {
+  await expectNoSidewaysOverflow(page);
+});
+
+// Skills items never break across lines, so the narrowest phones are where they could overflow.
+test("still fits a 320px phone", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await expectNoSidewaysOverflow(page);
 });
 
 test("loads every image", async ({ page }) => {
@@ -205,6 +249,28 @@ test.describe("navigation", () => {
     for (const label of ["Leadership", "Work", "About", "Contact"]) {
       await expect(bar.getByRole("link", { name: label })).toBeVisible();
     }
+  });
+
+  test("marks the section being read", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "the bar collapses to the name and résumé");
+    await page.goto("/");
+    const bar = page.getByRole("navigation", { name: "Sections" });
+    const jump = (id: string) =>
+      page.evaluate(
+        (target) => document.getElementById(target)?.scrollIntoView({ behavior: "instant" }),
+        id,
+      );
+
+    await jump("about");
+    await expect(bar.getByRole("link", { name: "About" })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
+    await expect(bar.locator("[aria-current]")).toHaveCount(1);
+
+    // Skills is not in the bar, so nothing claims to be current there.
+    await jump("skills");
+    await expect(bar.locator("[aria-current]")).toHaveCount(0);
   });
 
   test("skip link jumps to the content", async ({ page }) => {
