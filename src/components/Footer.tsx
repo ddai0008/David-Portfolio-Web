@@ -13,7 +13,7 @@ export function Footer() {
               href={person.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4"
+              className="hit underline-offset-4"
             >
               LinkedIn<span className="sr-only"> (opens in a new tab)</span>
             </a>
@@ -23,13 +23,13 @@ export function Footer() {
               href={person.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4"
+              className="hit underline-offset-4"
             >
               GitHub<span className="sr-only"> (opens in a new tab)</span>
             </a>
           </li>
           <li>
-            <a href={`mailto:${person.email}`} className="underline-offset-4">
+            <a href={`mailto:${person.email}`} className="hit underline-offset-4">
               Email
             </a>
           </li>

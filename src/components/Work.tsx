@@ -237,7 +237,7 @@ export function Work() {
               </Fact>
             </SheetSection>
             <SheetSection title="Stack">
-              <Fact>Swift, UIKit, MVC, MapKit, Google Maps SDK, Google Places API, Gemini API.</Fact>
+              <Fact>Swift, UIKit, MVC, MapKit, Google Maps SDK, Google Places API, Gemini API, Figma.</Fact>
             </SheetSection>
             <SheetSection title="Onboarding">
               <div className="flex justify-center gap-4">

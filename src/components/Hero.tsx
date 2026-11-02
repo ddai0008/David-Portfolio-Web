@@ -70,7 +70,7 @@ export function Hero() {
               href={person.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4"
+              className="hit underline-offset-4"
             >
               LinkedIn<span className="sr-only"> (opens in a new tab)</span>
             </a>
@@ -78,7 +78,7 @@ export function Hero() {
               href={person.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4"
+              className="hit underline-offset-4"
             >
               GitHub<span className="sr-only"> (opens in a new tab)</span>
             </a>
@@ -90,12 +90,12 @@ export function Hero() {
             style={vars({ "--i": 7 })}
           >
             <p className="eyebrow">Selected work</p>
-            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-3">
+            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-3 [@media(pointer:coarse)]:gap-y-[1.125rem]">
               {selectedWork.map((item) => (
                 <li key={item.href}>
                   <a
                     href={item.href}
-                    className="group inline-flex items-center gap-2.5 text-[1.0625rem] font-medium text-ink no-underline"
+                    className="hit group inline-flex items-center gap-2.5 text-[1.0625rem] font-medium text-ink no-underline"
                   >
                     <span
                       className="keep-colour size-2.5 rounded-full transition-transform group-hover:scale-150"
@@ -135,7 +135,7 @@ export function Hero() {
               href={proBudgetDemo}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium underline-offset-4"
+              className="hit font-medium underline-offset-4"
             >
               ProBudget, live: try the demo
               <span className="sr-only"> (opens in a new tab)</span>

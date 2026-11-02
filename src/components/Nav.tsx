@@ -9,7 +9,7 @@ export function Nav() {
       <div className="wrap flex h-14 items-center justify-between gap-4">
         <a
           href="#top"
-          className="text-[1.0625rem] font-semibold tracking-tight text-ink no-underline"
+          className="hit text-[1.0625rem] font-semibold tracking-tight text-ink no-underline"
         >
           {person.name}
         </a>

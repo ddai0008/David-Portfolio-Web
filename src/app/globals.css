@@ -31,8 +31,9 @@
 
   --glow-strength: 32%;
   /* How strongly the project hues tint the page behind the hero, the capstone and the contact.
-     Kept under 8% on paper (David's limit); a hue over black reads weaker, so dark is a touch higher. */
-  --aurora-strength: 8%;
+     David raised the paper limit from 8% to 12% (2026-11-02) after finding 8% too faint to see; a hue
+     over black reads weaker, so dark is a touch higher. */
+  --aurora-strength: 12%;
   --wash-strength: 6%;
 }
 
@@ -180,6 +181,25 @@
   max-width: 76rem;
   margin-inline: auto;
   padding-inline: max(1.25rem, env(safe-area-inset-left));
+}
+
+/* ---------- Touch tap areas ---------- */
+
+/* A text link is only as tall as its line, well under the 44px Apple asks for. On a touch screen the
+   link gets an invisible pseudo-element out to 44px in each direction it falls short. It adds no
+   layout, so nothing moves. Only for links with clear space around them: two controls closer than
+   44px would take each other's taps, so those are left at their drawn size. */
+@utility hit {
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-block: min(0px, calc((100% - 2.75rem) / 2));
+      inset-inline: min(0px, calc((100% - 2.75rem) / 2));
+    }
+  }
 }
 
 /* ---------- Buttons: ink pills. Blue is for links only. ---------- */
