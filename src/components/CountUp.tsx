@@ -2,12 +2,15 @@
 
 import { useEffect, useRef } from "react";
 
+const format = (value: number, prefix: string) =>
+  `${prefix}${String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+
 // A figure that counts up the first time it scrolls into view. The server renders, and
 // assistive technology always reads, the finished number, so nothing depends on the animation:
 // it only starts for a figure that is still below the fold, with motion allowed.
 export function CountUp({ to, prefix = "" }: { to: number; prefix?: string }) {
   const visible = useRef<HTMLSpanElement>(null);
-  const finished = `${prefix}${String(to).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  const finished = format(to, prefix);
 
   useEffect(() => {
     const node = visible.current;
@@ -15,8 +18,16 @@ export function CountUp({ to, prefix = "" }: { to: number; prefix?: string }) {
     // Already on screen, or behind the reader: leave the finished number alone.
     if (node.getBoundingClientRect().top < innerHeight) return;
 
+    // Change the text node React rendered rather than replacing it, so React's reference to it
+    // stays valid if the props ever change.
+    const text = node.firstChild;
+    if (!text) return;
+    const show = (value: string) => {
+      text.nodeValue = value;
+    };
+
     let frame = 0;
-    node.textContent = `${prefix}0`;
+    show(format(0, prefix));
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -27,12 +38,7 @@ export function CountUp({ to, prefix = "" }: { to: number; prefix?: string }) {
           const progress = Math.min((now - start) / duration, 1);
           // Fast at first, easing into the last digits.
           const eased = 1 - Math.pow(1 - progress, 3);
-          node.textContent =
-            progress < 1
-              ? `${prefix}${Math.round(to * eased)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`
-              : finished;
+          show(progress < 1 ? format(Math.round(to * eased), prefix) : finished);
           if (progress < 1) frame = requestAnimationFrame(tick);
         };
         frame = requestAnimationFrame(tick);
@@ -44,7 +50,7 @@ export function CountUp({ to, prefix = "" }: { to: number; prefix?: string }) {
     return () => {
       observer.disconnect();
       cancelAnimationFrame(frame);
-      node.textContent = finished;
+      show(finished);
     };
   }, [to, prefix, finished]);
 
