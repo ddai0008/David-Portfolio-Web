@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { palette } from "./palette";
-import { androidSpec, iphoneSpec } from "./phones";
+import { androidSpec, BODY_FILLET, iphoneSpec } from "./phones";
 
 // The devices are built in code: rounded bodies, a bezel, a glossy glass layer and a screen
 // plane. No models are downloaded, so there is nothing to license and almost nothing to ship.
@@ -94,7 +94,7 @@ function roundedRect(width: number, height: number, radius: number) {
 // A phone body: a slab whose corners are as round as the outline asks, with a small fillet round
 // the edges. (A rounded box cannot do this: its radius is capped at half its thickness, which
 // leaves a thin phone with almost square corners.)
-const FILLET = 0.012;
+const FILLET = BODY_FILLET;
 
 function slab(width: number, height: number, depth: number, radius: number) {
   // The extrusion grows by the fillet on every side, so start that much smaller.
@@ -117,6 +117,17 @@ function slab(width: number, height: number, depth: number, radius: number) {
   const smooth = mergeVertices(extruded, 1e-5);
   smooth.computeVertexNormals();
   extruded.dispose();
+
+  // Averaging would tilt the normals along the edge of each flat face and shade the face with a
+  // gradient. The front and back are flat, so point those vertices straight out; the fillet then
+  // blends smoothly from there.
+  const position = smooth.attributes.position;
+  const normal = smooth.attributes.normal;
+  for (let i = 0; i < position.count; i++) {
+    const z = position.getZ(i);
+    if (Math.abs(Math.abs(z) - depth / 2) < 1e-4) normal.setXYZ(i, 0, 0, Math.sign(z));
+  }
+  normal.needsUpdate = true;
   return smooth;
 }
 

@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { androidSpec, FRAME_CORNER_SHARE, iphoneSpec } from "../../src/components/stage/phones";
+import {
+  androidSpec,
+  BODY_FILLET,
+  FRAME_CORNER_SHARE,
+  iphoneSpec,
+} from "../../src/components/stage/phones";
 import images from "../../src/content/images.json";
 
 // The 3D phones show real screenshots, so each screen has to be exactly the shape of its picture:
@@ -34,19 +39,20 @@ test("the Android screen has the proportions of every NutriTrack crop", () => {
   }
 });
 
-test("the iPhone screen has the rounded corners baked into the frames", async () => {
-  const { data, info } = await sharp("public/work/mymichlin-splash.webp")
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const alpha = (x: number, y: number) => data[(y * info.width + x) * info.channels + 3];
+test("every MyMichlin frame has the rounded corners the iPhone screen is built for", async () => {
+  const frames = sizes("work/mymichlin-");
+  expect(frames.length).toBeGreaterThan(0);
+  for (const { name, width } of frames) {
+    const file = `public${images[name as keyof typeof images].src}`;
+    const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const alpha = (x: number, y: number) => data[(y * info.width + x) * info.channels + 3];
 
-  // A rounded corner crosses the diagonal at radius * (1 - 1/sqrt 2) from the corner.
-  let step = 0;
-  while (step < info.width / 2 && alpha(step, step) < 128) step++;
-  const measured = step / (1 - Math.SQRT1_2) / info.width;
-
-  expect(Math.abs(measured - FRAME_CORNER_SHARE)).toBeLessThan(0.012);
+    // A rounded corner crosses the diagonal at radius * (1 - 1/sqrt 2) from the corner.
+    let step = 0;
+    while (step < info.width / 2 && alpha(step, step) < 128) step++;
+    const measured = step / (1 - Math.SQRT1_2) / width;
+    expect(Math.abs(measured - FRAME_CORNER_SHARE), name).toBeLessThan(0.012);
+  }
   expect(iphoneSpec.display.radius / iphoneSpec.display.width).toBeCloseTo(FRAME_CORNER_SHARE, 4);
 });
 
@@ -60,4 +66,11 @@ test("the iPhone's glass sits an even distance inside its body, as on the real p
   expect(bezel.radius).toBeLessThan(body.radius);
   expect(bezel.width).toBeLessThan(body.width);
   expect(bezel.width).toBeGreaterThan(display.width);
+});
+
+test("the black glass starts where the flat front face ends, so it cannot float off the edge", () => {
+  for (const spec of [iphoneSpec, androidSpec]) {
+    const rim = (spec.body.width - spec.bezel.width) / 2;
+    expect(rim).toBeGreaterThanOrEqual(BODY_FILLET - 1e-9);
+  }
 });

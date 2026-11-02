@@ -17,8 +17,11 @@ const crop = images["work/nutritrack-screen-home"];
 // even 2.75 mm. At 0.8 wide, one millimetre is about 0.0113 units.
 const IPHONE_INSET = 0.0312;
 const IPHONE_DEPTH = 0.0935;
-// The titanium rim left showing around the black front glass.
-const IPHONE_RIM = 0.007;
+// How round the edges of a phone body are. The black front glass must start where the flat front
+// face ends, so the titanium rim round it is exactly this wide; any narrower and the glass would
+// hang over the curve and float off the metal at an angle.
+export const BODY_FILLET = 0.012;
+const IPHONE_RIM = BODY_FILLET;
 
 const iphoneDisplayWidth = 0.7376;
 const iphoneDisplayHeight = (iphoneDisplayWidth * frame.height) / frame.width;
