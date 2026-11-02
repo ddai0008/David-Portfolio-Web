@@ -827,6 +827,12 @@
     animation-play-state: paused;
   }
 
+  /* AmbientGate marks a pool group that is out of view. Nobody can see it drift, and it would
+     still cost the main thread a frame at a time. */
+  .aurora[data-offscreen] > span {
+    animation-play-state: paused;
+  }
+
   @supports (animation-timeline: view()) {
     /* The capstone chart draws top to bottom as it scrolls into view. Every line follows the
        chart's own timeline, so they run in order rather than each in its own few pixels. */
@@ -995,6 +1001,11 @@
 
   .nav::before {
     background: Highlight;
+  }
+
+  /* The hairline under the bar is a background fill too, so it took the page colour. */
+  .nav::after {
+    background: CanvasText;
   }
 }
 

@@ -1,4 +1,5 @@
 import { About } from "@/components/About";
+import { AmbientGate } from "@/components/AmbientGate";
 import { Contact } from "@/components/Contact";
 import { Credentials } from "@/components/Credentials";
 import { Footer } from "@/components/Footer";
@@ -14,6 +15,7 @@ export default function Home() {
   return (
     <>
       <Nav />
+      <AmbientGate />
       <main id="main" className="overflow-x-clip">
         <Hero />
         <Glance />
