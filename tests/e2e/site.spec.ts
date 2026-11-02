@@ -27,6 +27,81 @@ test("says what David is, with the facts that matter", async ({ page }) => {
   await expect(body).toContainText("Student Ambassador");
 });
 
+test("tells a recruiter the role, work rights and availability up top", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.locator("#top");
+  await expect(hero).toContainText("graduate software engineering role");
+  await expect(hero).toContainText("Australian citizen");
+  await expect(hero).toContainText("Available from December 2026");
+});
+
+test("puts the facts a recruiter scans for just under the hero", async ({ page }, testInfo) => {
+  await page.goto("/");
+  const strip = page.getByRole("region", { name: "At a glance" });
+  for (const fact of ["3.70", "82.1", "6", "~30,000", "DP-900"]) {
+    await expect(strip).toContainText(fact);
+  }
+
+  // On a laptop-sized screen the strip begins before the first scroll.
+  test.skip(testInfo.project.name === "mobile", "a phone's first screen is the hero alone");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const box = await strip.boundingBox();
+  expect(box?.y ?? Infinity).toBeLessThan(900);
+});
+
+test("says what each project did without opening a sheet", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.locator("#probudget").getByText("The database is moving to Azure, where"),
+  ).toBeVisible();
+  await expect(
+    page.locator("#mymichlin").getByText("Custom map annotations, built with async Swift."),
+  ).toBeVisible();
+  await expect(
+    page.locator("#nutritrack").getByText("Material Design interface designed in Figma"),
+  ).toBeVisible();
+});
+
+test("claims only what it can back up", async ({ page }) => {
+  await page.goto("/");
+  const body = page.locator("body");
+  // ProBudget is live with a demo account, not a "production" product with real users.
+  await expect(body).not.toContainText(/production finance/i);
+  // A 100-record audit proves matches were correct, not recall, so it is stated as a count.
+  await expect(page.locator("#impact")).toContainText("100 of 100");
+  await expect(body).not.toContainText("100% precision");
+  // The time-limited wording goes stale the week he graduates.
+  await expect(body).not.toContainText(/graduating November 2026|final-year/i);
+});
+
+test("shows the matching flow in order", async ({ page }) => {
+  await page.goto("/");
+  const steps = page.getByRole("list", { name: "How the matching worked" }).getByRole("listitem");
+  await expect(steps).toHaveCount(4);
+  await expect(steps.nth(0)).toContainText("Collect");
+  await expect(steps.nth(3)).toContainText("Review");
+});
+
+test("lays Education out across the row, not down the left", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "it stacks on a phone");
+  await page.goto("/");
+  const width = page.viewportSize()?.width ?? 0;
+  const gpa = await page.locator("#education").getByText("3.70", { exact: true }).boundingBox();
+  expect(gpa?.x ?? 0).toBeGreaterThan(width / 2);
+});
+
+test("every details button says which project it opens", async ({ page }) => {
+  await page.goto("/");
+  for (const name of [
+    "Details on ProBudget",
+    "Details on MyMichlin",
+    "Details on NutriTrack",
+    "Capstone details on Agencia Change",
+  ]) {
+    await expect(page.getByRole("button", { name }), name).toHaveCount(1);
+  }
+});
+
 test("offers the résumé download and the contact links", async ({ page }) => {
   await page.goto("/");
   for (const link of await page.getByRole("link", { name: /résumé/i }).all()) {
@@ -271,6 +346,32 @@ test.describe("navigation", () => {
     // Skills is not in the bar, so nothing claims to be current there.
     await jump("skills");
     await expect(bar.locator("[aria-current]")).toHaveCount(0);
+  });
+
+  test("the section links collapse into a menu on a phone", async ({ page }, testInfo) => {
+    await page.goto("/");
+    const button = page.getByRole("button", { name: "Menu" });
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+
+    if (testInfo.project.name !== "mobile") {
+      await expect(button).toBeHidden();
+      return;
+    }
+
+    await expect(menu).toBeHidden();
+    await button.click();
+    await expect(menu).toBeVisible();
+
+    // Escape closes it and puts focus back on the button.
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+    await expect(button).toBeFocused();
+
+    // Choosing a section goes there and closes the menu rather than leaving it over the page.
+    await button.click();
+    await menu.getByRole("link", { name: "Work" }).click();
+    await expect(menu).toBeHidden();
+    await expect(page).toHaveURL(/#work$/);
   });
 
   test("skip link jumps to the content", async ({ page }) => {

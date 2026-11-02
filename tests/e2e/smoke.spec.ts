@@ -57,4 +57,17 @@ test.describe("accessibility", () => {
 
     expect(violations).toEqual([]);
   });
+
+  test("has no violations with the phone menu open", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "the menu is for phones");
+    await page.goto("/");
+    await page.getByRole("button", { name: "Menu" }).click();
+    await expect(page.getByRole("navigation", { name: "Site menu" })).toBeVisible();
+
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+
+    expect(violations).toEqual([]);
+  });
 });

@@ -1,12 +1,16 @@
 import { person, selectedWork } from "@/content/site";
 import { vars } from "./css";
-import { LaptopFrame, PhoneFrame } from "./Devices";
+import { LaptopFrame } from "./Devices";
 import { Shot } from "./Shot";
 import { Tilt } from "./Tilt";
 
 export function Hero() {
+  // The section ends a little above the fold, so the facts strip under it shows without scrolling.
   return (
-    <section id="top" className="relative flex min-h-svh flex-col justify-center pt-24 pb-20">
+    <section
+      id="top"
+      className="relative flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-24 pb-16"
+    >
       <div className="wrap grid items-center gap-x-8 gap-y-20 md:grid-cols-12">
         <div className="md:col-span-7">
           <p className="hero-in eyebrow flex items-center gap-2.5" style={vars({ "--i": 0 })}>
@@ -31,7 +35,8 @@ export function Hero() {
           </p>
 
           <p className="hero-in lede mt-5 max-w-xl" style={vars({ "--i": 4 })}>
-            Final-year Monash IT and Business student, graduating November 2026.
+            Looking for a graduate software engineering role. Monash IT and Business, 2026.
+            Australian citizen.
           </p>
 
           <div
@@ -74,42 +79,22 @@ export function Hero() {
           </nav>
         </div>
 
-        {/* A preview of the work below. Decorative: each project has its own described images. */}
+        {/* A preview of the work below. Decorative: each project has its own described images. One
+            device, large enough to read, rather than three thumbnails. */}
         <div
-          className="hero-in relative mx-auto w-full max-w-md pb-[18%] md:col-span-5 md:mx-0 md:max-w-none md:pb-[14%]"
+          className="hero-in relative mx-auto w-full max-w-md pb-[6%] md:col-span-5 md:mx-0 md:max-w-none"
           style={vars({ "--i": 5 })}
           aria-hidden="true"
         >
           <Tilt className="relative" max={7}>
-            <div className="ml-auto w-[90%]">
-              <LaptopFrame>
-                <Shot
-                  name="work/probudget-transactions"
-                  alt=""
-                  sizes="(min-width: 768px) 440px, 90vw"
-                  eager
-                />
-              </LaptopFrame>
-            </div>
-            <div className="absolute bottom-0 left-[-2%] w-[27%] -rotate-6">
-              <PhoneFrame>
-                <Shot
-                  name="work/mymichlin-dashboard"
-                  alt=""
-                  sizes="(min-width: 768px) 130px, 27vw"
-                  eager
-                />
-              </PhoneFrame>
-            </div>
-            <div className="absolute right-[-4%] bottom-[-4%] w-[23%] rotate-6">
+            <LaptopFrame>
               <Shot
-                name="work/nutritrack-home"
+                name="work/probudget-transactions"
                 alt=""
-                sizes="(min-width: 768px) 110px, 23vw"
-                className="drop-shadow-[0_24px_30px_color-mix(in_srgb,var(--ink)_30%,transparent)]"
+                sizes="(min-width: 768px) 520px, 90vw"
                 eager
               />
-            </div>
+            </LaptopFrame>
           </Tilt>
         </div>
       </div>

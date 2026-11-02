@@ -2,7 +2,7 @@ import { Shot } from "./Shot";
 
 export function About() {
   return (
-    <section id="about" className="bg-paper-alt py-28 md:py-40">
+    <section id="about" className="bg-paper-alt py-24 md:py-32">
       <div className="wrap grid items-center gap-14 md:grid-cols-12 md:gap-16">
         <div className="reveal md:col-span-5">
           <Shot
