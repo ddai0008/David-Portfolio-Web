@@ -29,6 +29,8 @@ export function DetailsSheet({
         onClick={() => dialog.current?.showModal()}
       >
         {label}
+        {/* Three buttons say "Details", so each says what it opens. */}
+        <span className="sr-only"> on {title}</span>
       </button>
 
       <dialog

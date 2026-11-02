@@ -32,14 +32,26 @@ export const team = [
   { role: "Business analysts", count: 2 },
 ] as const;
 
+// Results land after the final exams, so update these when they do.
+export const academics = { gpa: "3.70", wam: "82.1" } as const;
+
+// What a recruiter wants in the first ten seconds, under the hero.
+export const glance = [
+  { figure: academics.gpa, caption: `GPA out of 4.0, WAM ${academics.wam}` },
+  { figure: "6", caption: "people led as capstone Team Lead" },
+  { figure: "~30,000", caption: "donor records de-duplicated at St Vincent de Paul" },
+  { figure: "DP-900", caption: "Microsoft Azure Data Fundamentals" },
+] as const;
+
 export const impact = [
   {
     figure: "~30,000",
     caption: "donor records de-duplicated with a reusable Power Query fuzzy-matching pipeline",
   },
   {
-    figure: "100%",
-    caption: "precision on a random 100-record audit of the matches",
+    figure: "100/100",
+    spoken: "100 of 100",
+    caption: "matches correct in a random audit sample",
   },
   {
     figure: "1–2 h",
@@ -49,6 +61,14 @@ export const impact = [
     figure: "1+ day",
     caption: "per manual identification pass replaced by automated flagging",
   },
+] as const;
+
+// How the de-duplication ran, using only what the résumé says about it.
+export const matchingFlow = [
+  { label: "Collect", text: "About 30,000 donor records" },
+  { label: "Match", text: "A reusable Power Query fuzzy-matching pipeline" },
+  { label: "Flag", text: "Likely duplicates flagged automatically" },
+  { label: "Review", text: "Human review for the final merge decision" },
 ] as const;
 
 export const highDistinction = [

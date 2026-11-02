@@ -4,7 +4,7 @@ import { skills } from "@/content/site";
 // table or a wall of icons. Hovering a group quietly dims the others.
 export function Skills() {
   return (
-    <section id="skills" className="py-28 md:py-40">
+    <section id="skills" className="py-24 md:py-32">
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Skills</p>

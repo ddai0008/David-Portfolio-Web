@@ -14,6 +14,7 @@ function Copy({
   eyebrow,
   title,
   summary,
+  highlights,
   chips,
   actions,
 }: {
@@ -21,6 +22,7 @@ function Copy({
   eyebrow: string;
   title: string;
   summary: string;
+  highlights: readonly string[];
   chips: readonly string[];
   actions: ReactNode;
 }) {
@@ -31,6 +33,18 @@ function Copy({
         {title}
       </h3>
       <p className="lede mt-5">{summary}</p>
+      {/* What the details sheet holds that matters most, so a skimmer need not open it. */}
+      <ul className="mt-6 space-y-2.5">
+        {highlights.map((line) => (
+          <li key={line} className="flex gap-3 text-[1.0625rem] leading-snug text-ink-muted">
+            <span
+              className="mt-[0.55em] size-1.5 shrink-0 rounded-full bg-ink-muted"
+              aria-hidden="true"
+            />
+            {line}
+          </li>
+        ))}
+      </ul>
       <ul className="mt-6 flex flex-wrap gap-2" aria-label="Built with">
         {chips.map((chip) => (
           <li key={chip} className="chip">
@@ -49,6 +63,7 @@ type ProjectInput = {
   eyebrow: string;
   title: string;
   summary: string;
+  highlights: readonly string[];
   chips: readonly string[];
   art: ReactNode;
   actions: ReactNode;
@@ -69,7 +84,11 @@ export function Work() {
       hue: "probudget",
       eyebrow: "Full-stack web · live",
       title: "ProBudget",
-      summary: "A production finance app for tracking recurring subscriptions and budget trends, in a responsive, dark-mode interface.",
+      summary: "A live finance app for tracking recurring subscriptions and budget trends, in a responsive, dark-mode interface.",
+      highlights: [
+        "I architected, built and deployed it, with a PostgreSQL schema and indexes designed for fast retrieval as data grows.",
+        "The database is moving to Azure, where I put my DP-900 to work.",
+      ],
       chips: ["Next.js 15", "TypeScript", "PostgreSQL (Neon)", "Vercel"],
       art: (
         <Tilt className="relative mx-auto max-w-2xl" max={4}>
@@ -147,6 +166,10 @@ export function Work() {
       eyebrow: "iOS · design prototype",
       title: "MyMichlin",
       summary: "A restaurant discovery app with an AI recommendation engine on Google Gemini. Graded 95%, High Distinction.",
+      highlights: [
+        "Live restaurant data from the Google Maps SDK, Places API and MapKit.",
+        "Custom map annotations, built with async Swift.",
+      ],
       chips: ["Swift", "UIKit", "MapKit", "Google Places API", "Gemini API"],
       art: (
         <Tilt className="mx-auto max-w-xl" max={6}>
@@ -248,6 +271,10 @@ export function Work() {
       eyebrow: "Android · offline-first",
       title: "NutriTrack",
       summary: "A Gemini-powered dietary analysis app that keeps working offline. Graded High Distinction.",
+      highlights: [
+        "Scores a person’s diet against food guidelines and suggests where to improve.",
+        "Material Design interface designed in Figma, scoped through simulated client sessions.",
+      ],
       chips: ["Kotlin", "Jetpack Compose", "Room", "Gemini API", "MVVM"],
       art: (
         <Tilt className="mx-auto max-w-xl" max={6}>

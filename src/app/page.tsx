@@ -2,6 +2,7 @@ import { About } from "@/components/About";
 import { Contact } from "@/components/Contact";
 import { Credentials } from "@/components/Credentials";
 import { Footer } from "@/components/Footer";
+import { Glance } from "@/components/Glance";
 import { Hero } from "@/components/Hero";
 import { Impact } from "@/components/Impact";
 import { Leadership } from "@/components/Leadership";
@@ -15,6 +16,7 @@ export default function Home() {
       <Nav />
       <main id="main" className="overflow-x-clip">
         <Hero />
+        <Glance />
         <Leadership />
         <Impact />
         <Work />

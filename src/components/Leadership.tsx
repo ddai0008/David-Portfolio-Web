@@ -22,7 +22,7 @@ const beats = [
 
 export function Leadership() {
   return (
-    <section id="leadership" className="relative overflow-hidden py-28 md:py-40">
+    <section id="leadership" className="relative overflow-hidden py-24 md:py-32">
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Industry capstone · Aug 2026 – present</p>
