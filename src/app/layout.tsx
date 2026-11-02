@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { person, siteUrl } from "@/content/site";
 import "./globals.css";
 
 // The cross-platform face. Apple devices use SF Pro through -apple-system and never draw it; every
@@ -16,10 +17,19 @@ const inter = Inter({
   display: "optional",
 });
 
+const title = "David Dai — Software Engineer";
+const description =
+  "David Dai is a graduating Monash IT and Business student and software engineer who ships and leads. Résumé and selected projects.";
+
+// The share card (opengraph-image.png next to this file) is picked up by Next, which adds its og:image
+// tags. metadataBase makes every URL here absolute, which link previews need.
 export const metadata: Metadata = {
-  title: "David Dai — Software Engineer",
-  description:
-    "David Dai is a graduating Monash IT and Business student and software engineer who ships and leads. Résumé and selected projects.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", url: "/", siteName: person.name, locale: "en_AU", title, description },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export const viewport: Viewport = {

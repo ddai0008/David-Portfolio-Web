@@ -34,7 +34,7 @@ export function MotionToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="motion-control cursor-pointer underline underline-offset-4 transition-colors hover:text-ink"
+      className="hit motion-control cursor-pointer underline underline-offset-4 transition-colors hover:text-ink"
     >
       {isPaused ? "Resume background motion" : "Pause background motion"}
     </button>

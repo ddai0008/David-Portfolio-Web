@@ -31,9 +31,15 @@
 
   --glow-strength: 32%;
   /* How strongly the project hues tint the page behind the hero, the capstone and the contact.
-     Kept under 8% on paper (David's limit); a hue over black reads weaker, so dark is a touch higher. */
+     Kept under 8% on paper (David's limit, set back to 8% on 2026-11-02 after trying 12%); a hue over
+     black reads weaker, so dark is a touch higher. */
   --aurora-strength: 8%;
   --wash-strength: 6%;
+  /* The dot grid's ink, as a share of the surface under it. It is fainter than a hairline on purpose:
+     set so the weakest text on the page, wherever it sits, keeps 4.5:1 even when a glyph lands on the
+     centre of a dot (a test measures every muted line against the mask). Dark is a touch higher for
+     the same reason as the glows. */
+  --dot-strength: 12%;
 }
 
 /* Follows the system unless a theme is chosen explicitly via data-theme. */
@@ -53,6 +59,7 @@
     --glow-strength: 40%;
     --aurora-strength: 13%;
     --wash-strength: 9%;
+    --dot-strength: 20%;
   }
 }
 
@@ -71,6 +78,7 @@
   --glow-strength: 40%;
   --aurora-strength: 13%;
   --wash-strength: 9%;
+  --dot-strength: 20%;
 }
 
 @theme inline {
@@ -180,6 +188,25 @@
   max-width: 76rem;
   margin-inline: auto;
   padding-inline: max(1.25rem, env(safe-area-inset-left));
+}
+
+/* ---------- Touch tap areas ---------- */
+
+/* A text link is only as tall as its line, well under the 44px Apple asks for. On a touch screen the
+   link gets an invisible pseudo-element out to 44px in each direction it falls short. It adds no
+   layout, so nothing moves. Only for links with clear space around them: two controls closer than
+   44px would take each other's taps, so those are left at their drawn size. */
+@utility hit {
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-block: min(0px, calc((100% - 2.75rem) / 2));
+      inset-inline: min(0px, calc((100% - 2.75rem) / 2));
+    }
+  }
 }
 
 /* ---------- Buttons: ink pills. Blue is for links only. ---------- */
@@ -374,6 +401,42 @@
       color-mix(in srgb, var(--hue-2, var(--hue)) calc(var(--wash-strength) * 0.8), transparent),
       transparent 70%
     );
+}
+
+/* ---------- Texture: a dot grid, the engineering counterpart to the colour pools. ----------
+   Paper that is plain between the content reads flat, so the margins and gaps of five sections carry a
+   faint grid of 1.4px dots every 24px, the way engineering paper does. It is a pseudo-element, so it is
+   not in the page for assistive technology and takes no taps, and it is CSS only, with nothing to run or
+   download. The mask keeps it fainter in the middle of a section (--dots-in) and fuller towards the
+   edges (--dots-out); the hero turns that round so the grid gathers behind the laptop. Hidden in
+   high-contrast modes below. The section must be `isolate`, which .dots sets, so z-index -1 stays above its background. */
+.dots {
+  position: relative;
+  isolation: isolate;
+}
+
+.dots::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--ink) var(--dot-strength), transparent) 1.4px,
+    transparent 1.8px
+  );
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(
+    ellipse var(--dots-w, 90%) var(--dots-h, 75%) at var(--dots-at, 50% 50%),
+    rgb(0 0 0 / var(--dots-in, 0.35)),
+    rgb(0 0 0 / var(--dots-out, 0.85))
+  );
+  mask-image: radial-gradient(
+    ellipse var(--dots-w, 90%) var(--dots-h, 75%) at var(--dots-at, 50% 50%),
+    rgb(0 0 0 / var(--dots-in, 0.35)),
+    rgb(0 0 0 / var(--dots-out, 0.85))
+  );
 }
 
 /* ---------- Diagrams that draw themselves. Their finished state is the default; the motion
@@ -917,7 +980,9 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    /* None at all, not a near-zero duration: with every property of every element transitioning
+       over 0.01ms, WebKit left inherited text colours stale after the theme changed. */
+    transition-property: none !important;
     scroll-behavior: auto !important;
   }
 }
@@ -995,7 +1060,8 @@
   }
 
   .aurora,
-  .wash {
+  .wash,
+  .dots::before {
     display: none;
   }
 
@@ -1006,6 +1072,13 @@
   /* The hairline under the bar is a background fill too, so it took the page colour. */
   .nav::after {
     background: CanvasText;
+  }
+}
+
+/* A reader who asks for more contrast without forcing colours gets plain paper behind the text. */
+@media (prefers-contrast: more) {
+  .dots::before {
+    display: none;
   }
 }
 

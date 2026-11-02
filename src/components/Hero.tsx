@@ -3,6 +3,7 @@ import { Aurora } from "./Aurora";
 import { vars } from "./css";
 import { LaptopFrame } from "./Devices";
 import { Shot } from "./Shot";
+import { ProfileLink } from "./ProfileLink";
 import { Tilt } from "./Tilt";
 
 export function Hero() {
@@ -10,7 +11,8 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-[clamp(4.5rem,11svh,6rem)] pb-10"
+      className="dots relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-[clamp(4.5rem,11svh,6rem)] pb-10"
+      style={vars({ "--dots-at": "76% 46%", "--dots-w": "70%", "--dots-h": "80%", "--dots-in": 1, "--dots-out": 0.25 })}
     >
       <Aurora
         fade="bottom"
@@ -63,25 +65,11 @@ export function Hero() {
 
           {/* Recruiters check a profile before anything else, so it is not left to the last section. */}
           <p
-            className="hero-in mt-5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[0.9375rem] font-medium"
+            className="hero-in mt-5 flex items-center gap-x-6"
             style={vars({ "--i": 6 })}
           >
-            <a
-              href={person.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline-offset-4"
-            >
-              LinkedIn<span className="sr-only"> (opens in a new tab)</span>
-            </a>
-            <a
-              href={person.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline-offset-4"
-            >
-              GitHub<span className="sr-only"> (opens in a new tab)</span>
-            </a>
+            <ProfileLink kind="linkedin" className="hit transition-opacity hover:opacity-70" />
+            <ProfileLink kind="github" className="hit transition-opacity hover:opacity-70" />
           </p>
 
           <nav
@@ -90,12 +78,12 @@ export function Hero() {
             style={vars({ "--i": 7 })}
           >
             <p className="eyebrow">Selected work</p>
-            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-3">
+            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-3 [@media(pointer:coarse)]:gap-y-[1.125rem]">
               {selectedWork.map((item) => (
                 <li key={item.href}>
                   <a
                     href={item.href}
-                    className="group inline-flex items-center gap-2.5 text-[1.0625rem] font-medium text-ink no-underline"
+                    className="hit group inline-flex items-center gap-2.5 text-[1.0625rem] font-medium text-ink no-underline"
                   >
                     <span
                       className="keep-colour size-2.5 rounded-full transition-transform group-hover:scale-150"
@@ -135,7 +123,7 @@ export function Hero() {
               href={proBudgetDemo}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium underline-offset-4"
+              className="hit font-medium underline-offset-4"
             >
               ProBudget, live: try the demo
               <span className="sr-only"> (opens in a new tab)</span>

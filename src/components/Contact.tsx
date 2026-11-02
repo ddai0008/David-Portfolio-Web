@@ -1,6 +1,7 @@
 import { person } from "@/content/site";
 import { Aurora } from "./Aurora";
 import { CopyEmail } from "./CopyEmail";
+import { ProfileLink } from "./ProfileLink";
 
 export function Contact() {
   return (
@@ -25,7 +26,7 @@ export function Contact() {
 
           <a
             href={`mailto:${person.email}`}
-            className="mt-10 inline-block text-[clamp(1.25rem,4.4vw,2.75rem)] font-semibold tracking-[-0.022em] break-all text-ink underline decoration-hairline decoration-2 underline-offset-8 transition-colors hover:decoration-ink"
+            className="hit mt-10 inline-block text-[clamp(1.25rem,4.4vw,2.75rem)] font-semibold tracking-[-0.022em] break-all text-ink underline decoration-hairline decoration-2 underline-offset-8 transition-colors hover:decoration-ink"
           >
             {person.email}
           </a>
@@ -35,22 +36,8 @@ export function Contact() {
               Download résumé
             </a>
             <CopyEmail email={person.email} />
-            <a
-              href={person.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary"
-            >
-              LinkedIn<span className="sr-only"> (opens in a new tab)</span>
-            </a>
-            <a
-              href={person.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary"
-            >
-              GitHub<span className="sr-only"> (opens in a new tab)</span>
-            </a>
+            <ProfileLink kind="linkedin" className="btn btn-secondary !w-11 !px-0" />
+            <ProfileLink kind="github" className="btn btn-secondary !w-11 !px-0" />
           </div>
         </div>
       </div>
