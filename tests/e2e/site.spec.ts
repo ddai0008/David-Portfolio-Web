@@ -655,41 +655,68 @@ test.describe("skills and their evidence", () => {
 });
 
 test.describe("tap areas", () => {
-  test("a touch screen can hit each text link over at least 44px", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "mobile", "a mouse keeps the drawn size");
-    await page.goto("/");
-    const links = await page.locator(".hit:visible").all();
-    // Nav name, two hero profile links, four selected-work links, the demo caption, the contact
-    // email and three footer links.
-    expect(links.length).toBeGreaterThanOrEqual(12);
-    for (const link of links) {
-      await link.evaluate((node) => node.scrollIntoView({ block: "center" }));
-      const area = await link.evaluate((node) => {
-        const box = node.getBoundingClientRect();
-        const hits = (x: number, y: number) => {
-          const found = document.elementFromPoint(x, y);
-          return !!found && (found === node || node.contains(found));
-        };
-        const x = box.left + box.width / 2;
-        const y = box.top + box.height / 2;
-        let up = 0;
-        while (up < 40 && hits(x, box.top - up - 1)) up++;
-        let down = 0;
-        while (down < 40 && hits(x, box.bottom + down)) down++;
-        let left = 0;
-        while (left < 40 && hits(box.left - left - 1, y)) left++;
-        let right = 0;
-        while (right < 40 && hits(box.right + right, y)) right++;
-        return {
-          name: (node.textContent ?? "").trim().replace(/\s+/g, " "),
-          width: box.width + left + right,
-          height: box.height + up + down,
-        };
-      });
-      expect(area.height, `${area.name} is hit over ${area.height}px tall`).toBeGreaterThanOrEqual(44);
-      expect(area.width, `${area.name} is hit over ${area.width}px wide`).toBeGreaterThanOrEqual(44);
-    }
-  });
+  // The pause toggle in the footer only shows when motion is allowed, so both settings are covered.
+  for (const [motion, count] of [
+    ["reduce", 12],
+    ["no-preference", 13],
+  ] as const) {
+    test(`a touch screen can hit each text link over at least 44px (motion: ${motion})`, async ({
+      page,
+    }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile", "a mouse keeps the drawn size");
+      await page.emulateMedia({ reducedMotion: motion });
+      await page.goto("/");
+      const links = await page.locator(".hit:visible").all();
+      // Nav name, two hero profile links, four selected-work links, the demo caption, the contact
+      // email, three footer links, and with motion allowed the pause toggle.
+      expect(links).toHaveLength(count);
+      for (const link of links) {
+        // Instant, not smooth: with motion allowed the page eases its scrolling, and measuring
+        // while it moves would test a link that is still on its way.
+        await link.evaluate(
+          (node) =>
+            new Promise<void>((done) => {
+              node.scrollIntoView({ block: "center", behavior: "instant" });
+              requestAnimationFrame(() => requestAnimationFrame(() => done()));
+            }),
+        );
+        const area = await link.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          const hits = (x: number, y: number) => {
+            const found = document.elementFromPoint(x, y);
+            return !!found && (found === node || node.contains(found));
+          };
+          const x = box.left + box.width / 2;
+          const y = box.top + box.height / 2;
+          let up = 0;
+          while (up < 40 && hits(x, box.top - up - 1)) up++;
+          let down = 0;
+          while (down < 40 && hits(x, box.bottom + down)) down++;
+          let left = 0;
+          while (left < 40 && hits(box.left - left - 1, y)) left++;
+          let right = 0;
+          while (right < 40 && hits(box.right + right, y)) right++;
+          // A neighbour's larger area must never cover this link's own text.
+          const own = [
+            [x, y],
+            [box.left + 2, y],
+            [box.right - 2, y],
+            [x, box.top + 2],
+            [x, box.bottom - 2],
+          ].every(([px, py]) => hits(px, py));
+          return {
+            name: (node.textContent ?? "").trim().replace(/\s+/g, " "),
+            width: box.width + left + right,
+            height: box.height + up + down,
+            own,
+          };
+        });
+        expect(area.own, `${area.name} keeps its own taps`).toBe(true);
+        expect(area.height, `${area.name} is hit over ${area.height}px tall`).toBeGreaterThanOrEqual(44);
+        expect(area.width, `${area.name} is hit over ${area.width}px wide`).toBeGreaterThanOrEqual(44);
+      }
+    });
+  }
 
   test("a mouse gets no extra hit area", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === "mobile", "a touch screen gets the larger areas");
