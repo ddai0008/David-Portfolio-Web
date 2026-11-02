@@ -10,7 +10,7 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-24 pb-16"
+      className="relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-24 pb-10"
     >
       <Aurora
         fade="bottom"
@@ -63,7 +63,7 @@ export function Hero() {
 
           <nav
             aria-label="Selected work"
-            className="hero-in mt-16 md:mt-24"
+            className="hero-in mt-12 md:mt-[clamp(2rem,9svh,6rem)]"
             style={vars({ "--i": 6 })}
           >
             <p className="eyebrow">Selected work</p>

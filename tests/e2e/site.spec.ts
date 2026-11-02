@@ -42,11 +42,16 @@ test("puts the facts a recruiter scans for just under the hero", async ({ page }
     await expect(strip).toContainText(fact);
   }
 
-  // On a laptop-sized screen the strip begins before the first scroll.
+  // On laptop-sized screens, short ones included, the strip begins before the first scroll.
   test.skip(testInfo.project.name === "mobile", "a phone's first screen is the hero alone");
-  await page.setViewportSize({ width: 1440, height: 900 });
-  const box = await strip.boundingBox();
-  expect(box?.y ?? Infinity).toBeLessThan(900);
+  for (const [width, height] of [
+    [1440, 900],
+    [1366, 768],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const box = await strip.boundingBox();
+    expect(box?.y ?? Infinity, `${width}x${height}`).toBeLessThan(height);
+  }
 });
 
 test("says what each project did without opening a sheet", async ({ page }) => {
