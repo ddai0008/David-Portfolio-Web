@@ -4,7 +4,7 @@ import { MatchGlyph } from "./MatchGlyph";
 
 export function Impact() {
   return (
-    <section id="impact" className="bg-paper-alt py-24 md:py-32">
+    <section id="impact" className="dots bg-paper-alt py-24 md:py-32">
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Business analyst intern · St Vincent de Paul Society · Mar – May 2026</p>

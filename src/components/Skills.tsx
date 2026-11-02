@@ -9,7 +9,7 @@ export function Skills() {
   const byId = Object.fromEntries(evidence.map((place) => [place.id, place]));
 
   return (
-    <section id="skills" className="py-24 md:py-32">
+    <section id="skills" className="dots py-24 md:py-32">
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Skills</p>
