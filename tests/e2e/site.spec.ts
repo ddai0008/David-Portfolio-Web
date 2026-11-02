@@ -592,6 +592,9 @@ test.describe("high-contrast mode", () => {
         line: colour(".team-line").backgroundColor,
         dot: colour(".team-dot").backgroundColor,
         hub: colour(".team-hub").borderTopWidth,
+        // The one deliberate exception: project-colour dots identify a project, so they keep their own colour.
+        projectDot: colour(".skill-dot:not([data-plain])").backgroundColor,
+        availabilityDot: colour(".signal-dot").backgroundColor,
         underlined: [...document.querySelectorAll(".skill")].filter((node) =>
           getComputedStyle(node).textDecorationLine.includes("underline"),
         ).length,
@@ -600,6 +603,8 @@ test.describe("high-contrast mode", () => {
     expect(seen.line).not.toBe(seen.page);
     expect(seen.dot).not.toBe(seen.page);
     expect(seen.hub).toBe("1px");
+    expect(seen.projectDot).toBe("rgb(47, 107, 255)"); // ProBudget's blue, not the system colour
+    expect(seen.availabilityDot).toBe("rgb(31, 168, 154)");
     expect(seen.underlined).toBe(0);
   });
 });
