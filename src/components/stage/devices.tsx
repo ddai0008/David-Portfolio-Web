@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { palette } from "./palette";
-import { androidSpec, BODY_FILLET, iphoneSpec } from "./phones";
+import { androidSpec, BODY_FILLET, frontLayers, iphoneSpec } from "./phones";
 
 // The devices are built in code: rounded bodies, a bezel, a glossy glass layer and a screen
 // plane. No models are downloaded, so there is nothing to license and almost nothing to ship.
@@ -279,6 +279,7 @@ export function Phone({
 
   // Everything on the front sits a hair above the body, in a fixed order.
   const front = spec.body.depth / 2;
+  const layer = frontLayers(screens.length);
   const halfWidth = spec.body.width / 2;
 
   // Each screen sits on the previous one and fades in as the scroll reaches it, so the content
@@ -317,14 +318,14 @@ export function Phone({
           </mesh>
         </>
       )}
-      <mesh geometry={bezel} position={[0, 0, front + 0.0003]}>
+      <mesh geometry={bezel} position={[0, 0, front + layer.bezel]}>
         <meshBasicMaterial color={palette.black} />
       </mesh>
       {screens.map((texture, k) => (
         <mesh
           key={k}
           geometry={display}
-          position={[0, 0, front + 0.0006 + k * 0.0003]}
+          position={[0, 0, front + layer.screen(k)]}
           renderOrder={k + 1}
         >
           <meshBasicMaterial
@@ -347,14 +348,14 @@ export function Phone({
           position={[
             0,
             spec.display.height / 2 - iphoneSpec.island.top - iphoneSpec.island.height / 2,
-            front + 0.0016,
+            front + layer.island,
           ]}
           renderOrder={15}
         >
           <meshBasicMaterial color={palette.black} />
         </mesh>
       )}
-      <Glass geometry={display} z={front + 0.002} />
+      <Glass geometry={display} z={front + layer.glass} />
     </group>
   );
 }

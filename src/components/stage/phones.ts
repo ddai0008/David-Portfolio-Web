@@ -77,3 +77,20 @@ export const androidSpec = {
     radius: 0.08,
   },
 } as const satisfies PhoneSpec;
+
+// How far in front of a phone's body each layer on its front sits, from the back to the front: the
+// black glass, then each screen (they fade in over one another), then the Dynamic Island, then the
+// glossy layer. The island must be in front of every screen: the later screens are mostly white
+// at the top and would otherwise wash it out. Kept in one place so a test can check the order.
+const LAYER_STEP = 0.0003;
+
+export function frontLayers(screenCount: number) {
+  const screen = (index: number) => 2 * LAYER_STEP + index * LAYER_STEP;
+  const top = screen(Math.max(screenCount - 1, 0));
+  return {
+    bezel: LAYER_STEP,
+    screen,
+    island: top + 2 * LAYER_STEP,
+    glass: top + 4 * LAYER_STEP,
+  };
+}

@@ -4,6 +4,7 @@ import {
   androidSpec,
   BODY_FILLET,
   FRAME_CORNER_SHARE,
+  frontLayers,
   iphoneSpec,
 } from "../../src/components/stage/phones";
 import images from "../../src/content/images.json";
@@ -72,5 +73,18 @@ test("the black glass starts where the flat front face ends, so it cannot float 
   for (const spec of [iphoneSpec, androidSpec]) {
     const rim = (spec.body.width - spec.bezel.width) / 2;
     expect(rim).toBeGreaterThanOrEqual(BODY_FILLET - 1e-9);
+  }
+});
+
+test("the Dynamic Island is in front of every screen, and the glass in front of that", () => {
+  // The last MyMichlin screens are mostly white at the top and wash out an island behind them.
+  for (const screens of [1, 3, 5, 8]) {
+    const layer = frontLayers(screens);
+    const last = layer.screen(screens - 1);
+    expect(layer.bezel, `${screens} screens`).toBeLessThan(layer.screen(0));
+    expect(last, `${screens} screens`).toBeLessThan(layer.island);
+    expect(layer.island, `${screens} screens`).toBeLessThan(layer.glass);
+    // Far enough apart for the depth buffer to tell them apart at the stage's distance.
+    expect(layer.island - last, `${screens} screens`).toBeGreaterThanOrEqual(0.0005);
   }
 });
