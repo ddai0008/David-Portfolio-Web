@@ -143,7 +143,7 @@ export const skillEvidence: Readonly<Record<string, readonly Evidence[]>> = {
   "Jetpack Compose": ["nutritrack"],
   Room: ["nutritrack"],
   MVVM: ["nutritrack"],
-  Figma: ["nutritrack"],
+  Figma: ["mymichlin", "nutritrack"],
   CakePHP: ["agencia"],
   MySQL: ["agencia"],
   "Yjs (CRDT)": ["agencia"],

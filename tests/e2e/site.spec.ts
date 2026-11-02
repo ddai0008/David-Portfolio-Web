@@ -431,7 +431,8 @@ test.describe("diagrams and colour", () => {
         parseFloat(style.getPropertyValue(name)),
       );
     });
-    for (const strength of strengths) expect(strength).toBeLessThanOrEqual(8);
+    // David's limit on paper: raised from 8% to 12% on 2026-11-02, after the 8% pass looked too faint.
+    for (const strength of strengths) expect(strength).toBeLessThanOrEqual(12);
     // Decorative, so none of it is announced.
     for (const wash of await page.locator(".aurora, .wash").all()) {
       await expect(wash).toHaveAttribute("aria-hidden", "true");
@@ -621,10 +622,83 @@ test.describe("skills and their evidence", () => {
     expect(await underlined()).toEqual([]);
   });
 
+  test("each project's pill underlines exactly the skills that name it", async ({ page }) => {
+    await page.goto("/");
+    for (const place of evidence) {
+      await page.locator("label.skill-pill", { hasText: place.label }).click();
+      const underlined = await page
+        .locator(".skill")
+        .evaluateAll((nodes) =>
+          nodes
+            .filter((node) => getComputedStyle(node).textDecorationLine.includes("underline"))
+            // The first text node is the skill itself; the rest is the dots and the spoken evidence.
+            .map((node) => node.firstChild?.textContent?.trim() ?? ""),
+        );
+      const expected = Object.entries(skillEvidence)
+        .filter(([, where]) => (where as readonly string[]).includes(place.id))
+        .map(([name]) => name);
+      // At least one, so a renamed or added project cannot end up with a pill that does nothing.
+      expect(expected.length, `${place.label} has no skills`).toBeGreaterThan(0);
+      expect(underlined.sort(), place.label).toEqual(expected.sort());
+    }
+  });
+
+  test("Figma is shown under both app projects it was used for", () => {
+    expect(skillEvidence.Figma).toEqual(["mymichlin", "nutritrack"]);
+  });
+
   test("a skill's evidence is named for assistive technology", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator(".skill", { hasText: "TypeScript" })).toContainText("(ProBudget)");
     await expect(page.locator(".skill", { hasText: "Python" })).not.toContainText("(");
+  });
+});
+
+test.describe("tap areas", () => {
+  test("a touch screen can hit each text link over at least 44px", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "a mouse keeps the drawn size");
+    await page.goto("/");
+    const links = await page.locator(".hit:visible").all();
+    // Nav name, two hero profile links, four selected-work links, the demo caption, the contact
+    // email and three footer links.
+    expect(links.length).toBeGreaterThanOrEqual(12);
+    for (const link of links) {
+      await link.evaluate((node) => node.scrollIntoView({ block: "center" }));
+      const area = await link.evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        const hits = (x: number, y: number) => {
+          const found = document.elementFromPoint(x, y);
+          return !!found && (found === node || node.contains(found));
+        };
+        const x = box.left + box.width / 2;
+        const y = box.top + box.height / 2;
+        let up = 0;
+        while (up < 40 && hits(x, box.top - up - 1)) up++;
+        let down = 0;
+        while (down < 40 && hits(x, box.bottom + down)) down++;
+        let left = 0;
+        while (left < 40 && hits(box.left - left - 1, y)) left++;
+        let right = 0;
+        while (right < 40 && hits(box.right + right, y)) right++;
+        return {
+          name: (node.textContent ?? "").trim().replace(/\s+/g, " "),
+          width: box.width + left + right,
+          height: box.height + up + down,
+        };
+      });
+      expect(area.height, `${area.name} is hit over ${area.height}px tall`).toBeGreaterThanOrEqual(44);
+      expect(area.width, `${area.name} is hit over ${area.width}px wide`).toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  test("a mouse gets no extra hit area", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "a touch screen gets the larger areas");
+    await page.goto("/");
+    const content = await page
+      .locator(".hit")
+      .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node, "::after").content));
+    expect(content.length).toBeGreaterThanOrEqual(12);
+    for (const value of content) expect(value).toMatch(/^(none|normal)$/);
   });
 });
 
