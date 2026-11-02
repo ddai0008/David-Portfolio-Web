@@ -30,7 +30,7 @@ A single scrolling page, a static export hosted on Vercel, linked from the résu
 
 ## Brand Commitments
 Binding, confirmed by David. Critique and polish refine inside these and do not redesign.
-- **Palette: Paper and Cobalt, kept restrained.** Paper and ink surfaces. Blue only for links, focus and selection. Primary buttons are ink. Colour comes from the work: each project shows a soft glow in its own colour and the page tints stay light (about 12% at most on paper). Colour must not dominate or make the site feel like a template. Light and dark are both designed, following the system with a manual toggle.
+- **Palette: Paper and Cobalt, kept restrained.** Paper and ink surfaces. Blue only for links, focus and selection. Primary buttons are ink. Colour comes from the work: each project shows a soft glow in its own colour and the page tints stay light (under about 8% on paper). Colour must not dominate or make the site feel like a template. Light and dark are both designed, following the system with a manual toggle.
 - **Type: system font stack first** (`-apple-system` / SF Pro), then Inter. Apple design principles: clarity, deference, depth. Say things with type, layout and motion rather than tables or walls of text; one idea per screen.
 - **3D carries content.** A scroll-driven stage of real devices (laptop, iPhone, Android phone) showing real projects. No decorative 3D. Reduced motion, small screens, data saver and missing WebGL all get the flat layout.
 - **Voice:** outcome-first, first person, short. The wordmark is typographic: "David Dai".

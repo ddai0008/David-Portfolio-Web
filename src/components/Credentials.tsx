@@ -5,7 +5,7 @@ const figure =
 
 export function Credentials() {
   return (
-    <section id="education" className="bg-paper-alt py-24 md:py-32">
+    <section id="education" className="dots bg-paper-alt py-24 md:py-32">
       <div className="wrap grid gap-x-10 gap-y-12 md:grid-cols-12 md:gap-y-20">
         <div className="reveal md:col-span-7">
           <p className="eyebrow">Monash University · Bachelor of IT and Business · 2026</p>

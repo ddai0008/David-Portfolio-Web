@@ -431,8 +431,8 @@ test.describe("diagrams and colour", () => {
         parseFloat(style.getPropertyValue(name)),
       );
     });
-    // David's limit on paper: raised from 8% to 12% on 2026-11-02, after the 8% pass looked too faint.
-    for (const strength of strengths) expect(strength).toBeLessThanOrEqual(12);
+    // David's limit on paper. He tried 12% on 2026-11-02 and set it back to 8%.
+    for (const strength of strengths) expect(strength).toBeLessThanOrEqual(8);
     // Decorative, so none of it is announced.
     for (const wash of await page.locator(".aurora, .wash").all()) {
       await expect(wash).toHaveAttribute("aria-hidden", "true");
@@ -727,6 +727,92 @@ test.describe("tap areas", () => {
     expect(content.length).toBeGreaterThanOrEqual(12);
     for (const value of content) expect(value).toMatch(/^(none|normal)$/);
   });
+});
+
+test.describe("dot grid", () => {
+  const sections = ["about", "education", "impact", "skills", "top"];
+
+  test("sits behind five sections and is only paint", async ({ page }) => {
+    await page.goto("/");
+    const ids = await page.locator(".dots").evaluateAll((nodes) => nodes.map((node) => node.id));
+    expect(ids.sort()).toEqual(sections);
+    for (const id of sections) {
+      const grid = await page.locator(`#${id}`).evaluate((node) => {
+        const style = getComputedStyle(node, "::before");
+        return {
+          content: style.content,
+          events: style.pointerEvents,
+          position: style.position,
+          image: style.backgroundImage,
+        };
+      });
+      expect(grid.content, id).toBe('""');
+      // It must never take a tap or a click from the content over it.
+      expect(grid.events, id).toBe("none");
+      expect(grid.position, id).toBe("absolute");
+      expect(grid.image, id).toContain("radial-gradient");
+    }
+  });
+
+  // The grid sits behind text, so a line of muted text that lands exactly on a dot must still be
+  // readable. The dot colour is the surface with a share of ink, and the mask thins it to a third
+  // where the text sits. The surface used is --paper-alt, the worse of the two in both themes.
+  for (const scheme of ["light", "dark"] as const) {
+    test(`muted text stays readable over a dot (${scheme})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto("/");
+      const tokens = await page.evaluate(() => {
+        const style = getComputedStyle(document.documentElement);
+        const read = (name: string) => style.getPropertyValue(name).trim();
+        return {
+          ink: read("--ink"),
+          muted: read("--ink-muted"),
+          surface: read("--paper-alt"),
+          strength: parseFloat(read("--dot-strength")) / 100,
+        };
+      });
+      const rgb = (hex: string) =>
+        [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)) as [number, number, number];
+      const luminance = (hex: string) => {
+        const [r, g, b] = rgb(hex).map((value) => {
+          const channel = value / 255;
+          return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const contrast = (a: string, b: string) => {
+        const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (high + 0.05) / (low + 0.05);
+      };
+      const dot = (share: number) => {
+        const surface = rgb(tokens.surface);
+        const ink = rgb(tokens.ink);
+        const mixed = surface.map((value, i) => Math.round(value + (ink[i] - value) * share));
+        return `#${mixed.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+      };
+      // Full strength, at the edges where there is little text: about 4:1 for the muted text.
+      expect(contrast(tokens.muted, dot(tokens.strength))).toBeGreaterThanOrEqual(3.9);
+      // Thinned to the 35% the mask leaves over the text: the normal 4.5:1 for body text.
+      expect(contrast(tokens.muted, dot(tokens.strength * 0.35))).toBeGreaterThanOrEqual(4.5);
+      // Ink text, the headings and figures, over a full-strength dot.
+      expect(contrast(tokens.ink, dot(tokens.strength))).toBeGreaterThanOrEqual(7);
+    });
+  }
+
+  for (const [name, media] of [
+    ["forced colours", { forcedColors: "active" }],
+    ["more contrast", { contrast: "more" }],
+  ] as const) {
+    test(`is gone with ${name}`, async ({ page }) => {
+      await page.emulateMedia(media);
+      await page.goto("/");
+      const displays = await page
+        .locator(".dots")
+        .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node, "::before").display));
+      expect(displays).toHaveLength(5);
+      for (const display of displays) expect(display).toBe("none");
+    });
+  }
 });
 
 test.describe("high-contrast mode", () => {

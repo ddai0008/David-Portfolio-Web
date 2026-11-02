@@ -10,7 +10,8 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-[clamp(4.5rem,11svh,6rem)] pb-10"
+      className="dots relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-[clamp(4.5rem,11svh,6rem)] pb-10"
+      style={vars({ "--dots-at": "76% 46%", "--dots-w": "70%", "--dots-h": "80%", "--dots-in": 1, "--dots-out": 0.25 })}
     >
       <Aurora
         fade="bottom"
