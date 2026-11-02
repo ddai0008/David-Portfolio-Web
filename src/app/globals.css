@@ -35,10 +35,11 @@
      black reads weaker, so dark is a touch higher. */
   --aurora-strength: 8%;
   --wash-strength: 6%;
-  /* The dot grid's ink, as a share of the surface under it. It is as faint as a hairline on purpose: a
-     muted line of text that lands exactly on a dot still keeps about 4:1, and the grid is thinned
-     where the text sits (see .dots). Dark is a touch higher for the same reason as the glows. */
-  --dot-strength: 16%;
+  /* The dot grid's ink, as a share of the surface under it. It is fainter than a hairline on purpose:
+     set so the weakest text on the page, wherever it sits, keeps 4.5:1 even when a glyph lands on the
+     centre of a dot (a test measures every muted line against the mask). Dark is a touch higher for
+     the same reason as the glows. */
+  --dot-strength: 12%;
 }
 
 /* Follows the system unless a theme is chosen explicitly via data-theme. */
@@ -406,9 +407,9 @@
    Paper that is plain between the content reads flat, so the margins and gaps of five sections carry a
    faint grid of 1.4px dots every 24px, the way engineering paper does. It is a pseudo-element, so it is
    not in the page for assistive technology and takes no taps, and it is CSS only, with nothing to run or
-   download. The mask thins it where the text sits (--dots-in) and keeps it fuller towards the edges
-   (--dots-out); the hero turns that round so the grid gathers behind the laptop. Hidden in high-contrast
-   modes below. The section must be `isolate`, which .dots sets, so z-index -1 stays above its background. */
+   download. The mask keeps it fainter in the middle of a section (--dots-in) and fuller towards the
+   edges (--dots-out); the hero turns that round so the grid gathers behind the laptop. Hidden in
+   high-contrast modes below. The section must be `isolate`, which .dots sets, so z-index -1 stays above its background. */
 .dots {
   position: relative;
   isolation: isolate;
@@ -429,12 +430,12 @@
   -webkit-mask-image: radial-gradient(
     ellipse var(--dots-w, 90%) var(--dots-h, 75%) at var(--dots-at, 50% 50%),
     rgb(0 0 0 / var(--dots-in, 0.35)),
-    rgb(0 0 0 / var(--dots-out, 1))
+    rgb(0 0 0 / var(--dots-out, 0.85))
   );
   mask-image: radial-gradient(
     ellipse var(--dots-w, 90%) var(--dots-h, 75%) at var(--dots-at, 50% 50%),
     rgb(0 0 0 / var(--dots-in, 0.35)),
-    rgb(0 0 0 / var(--dots-out, 1))
+    rgb(0 0 0 / var(--dots-out, 0.85))
   );
 }
 

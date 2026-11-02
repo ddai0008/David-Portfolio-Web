@@ -754,48 +754,99 @@ test.describe("dot grid", () => {
     }
   });
 
-  // The grid sits behind text, so a line of muted text that lands exactly on a dot must still be
-  // readable. The dot colour is the surface with a share of ink, and the mask thins it to a third
-  // where the text sits. The surface used is --paper-alt, the worse of the two in both themes.
+  // The grid sits behind text, so a line of muted text, the weakest text on the page, must stay
+  // readable even when a glyph lands on the centre of a dot. This measures every such line against
+  // the mask's real value at its position (the same maths as the CSS gradient), not a typical one.
   for (const scheme of ["light", "dark"] as const) {
-    test(`muted text stays readable over a dot (${scheme})`, async ({ page }) => {
+    test(`muted text stays readable over the grid (${scheme})`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });
       await page.goto("/");
-      const tokens = await page.evaluate(() => {
-        const style = getComputedStyle(document.documentElement);
-        const read = (name: string) => style.getPropertyValue(name).trim();
-        return {
-          ink: read("--ink"),
-          muted: read("--ink-muted"),
-          surface: read("--paper-alt"),
-          strength: parseFloat(read("--dot-strength")) / 100,
+      const sections = await page.evaluate(() => {
+        const root = getComputedStyle(document.documentElement);
+        const token = (name: string) => root.getPropertyValue(name).trim();
+        // A minifier may shorten #000000 to #000.
+        const hex = (value: string) => {
+          let digits = value.replace("#", "");
+          if (digits.length === 3) digits = [...digits].map((digit) => digit + digit).join("");
+          return [0, 2, 4].map((at) => parseInt(digits.slice(at, at + 2), 16));
         };
-      });
-      const rgb = (hex: string) =>
-        [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)) as [number, number, number];
-      const luminance = (hex: string) => {
-        const [r, g, b] = rgb(hex).map((value) => {
-          const channel = value / 255;
-          return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        const numbers = (value: string) => (value.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+        const luminance = (colour: number[]) => {
+          const [r, g, b] = colour.map((value) => {
+            const channel = value / 255;
+            return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+          });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const contrast = (a: number[], b: number[]) => {
+          const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+          return (high + 0.05) / (low + 0.05);
+        };
+        const strength = parseFloat(token("--dot-strength")) / 100;
+        const ink = hex(token("--ink"));
+        const muted = hex(token("--ink-muted"));
+        const paper = hex(token("--paper"));
+
+        return [...document.querySelectorAll<HTMLElement>(".dots")].map((section) => {
+          const box = section.getBoundingClientRect();
+          const style = getComputedStyle(section);
+          const prop = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
+          const length = (value: string, size: number) =>
+            value.endsWith("%") ? (parseFloat(value) / 100) * size : parseFloat(value);
+          const [atX, atY] = prop("--dots-at", "50% 50%").split(/\s+/);
+          const cx = length(atX, box.width);
+          const cy = length(atY, box.height);
+          const rx = length(prop("--dots-w", "90%"), box.width);
+          const ry = length(prop("--dots-h", "75%"), box.height);
+          const inner = parseFloat(prop("--dots-in", "0.35"));
+          const outer = parseFloat(prop("--dots-out", "0.85"));
+          const alphaAt = (x: number, y: number) =>
+            inner + (outer - inner) * Math.min(1, Math.hypot((x - cx) / rx, (y - cy) / ry));
+          const transparent = numbers(style.backgroundColor).length === 0 || style.backgroundColor.endsWith(", 0)");
+          const surface = transparent ? paper : numbers(style.backgroundColor);
+
+          let worst = { margin: Infinity, contrast: 0, need: 0, text: "" };
+          for (const el of section.querySelectorAll<HTMLElement>("*")) {
+            if (el.closest("[aria-hidden='true'], .sr-only")) continue;
+            const computed = getComputedStyle(el);
+            if (numbers(computed.color).join() !== muted.join()) continue;
+            if (![...el.childNodes].some((node) => node.nodeType === 3 && node.textContent?.trim())) continue;
+            if (computed.display === "none" || computed.visibility === "hidden") continue;
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            let alpha = 0;
+            for (const line of range.getClientRects()) {
+              if (!line.width) continue;
+              for (const [x, y] of [
+                [line.left, line.top],
+                [line.right, line.top],
+                [line.left, line.bottom],
+                [line.right, line.bottom],
+              ]) {
+                alpha = Math.max(alpha, alphaAt(x - box.left, y - box.top));
+              }
+            }
+            const dot = surface.map((value, i) => value + (ink[i] - value) * strength * alpha);
+            const size = parseFloat(computed.fontSize);
+            const large = size >= 24 || (size >= 18.66 && parseInt(computed.fontWeight) >= 700);
+            const need = large ? 3 : 4.5;
+            const ratio = contrast(muted, dot);
+            if (ratio - need < worst.margin) {
+              worst = { margin: ratio - need, contrast: ratio, need, text: (el.textContent ?? "").trim().slice(0, 40) };
+            }
+          }
+          return { id: section.id, ...worst };
         });
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      };
-      const contrast = (a: string, b: string) => {
-        const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-        return (high + 0.05) / (low + 0.05);
-      };
-      const dot = (share: number) => {
-        const surface = rgb(tokens.surface);
-        const ink = rgb(tokens.ink);
-        const mixed = surface.map((value, i) => Math.round(value + (ink[i] - value) * share));
-        return `#${mixed.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
-      };
-      // Full strength, at the edges where there is little text: about 4:1 for the muted text.
-      expect(contrast(tokens.muted, dot(tokens.strength))).toBeGreaterThanOrEqual(3.9);
-      // Thinned to the 35% the mask leaves over the text: the normal 4.5:1 for body text.
-      expect(contrast(tokens.muted, dot(tokens.strength * 0.35))).toBeGreaterThanOrEqual(4.5);
-      // Ink text, the headings and figures, over a full-strength dot.
-      expect(contrast(tokens.ink, dot(tokens.strength))).toBeGreaterThanOrEqual(7);
+      });
+      expect(sections).toHaveLength(5);
+      for (const section of sections) {
+        // Every section has some muted text, so a finding of none means the check found nothing.
+        expect(section.text, `${section.id}: no muted text was measured`).not.toBe("");
+        expect(
+          section.contrast,
+          `${section.id}: "${section.text}" is ${section.contrast.toFixed(2)}:1 on a dot, needs ${section.need}`,
+        ).toBeGreaterThanOrEqual(section.need);
+      }
     });
   }
 
