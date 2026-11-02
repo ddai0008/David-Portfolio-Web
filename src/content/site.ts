@@ -1,6 +1,9 @@
 // Facts on the page come from the résumé PDF. Never add the phone number, city, retail roles or
 // student ID here (see CLAUDE.md).
 
+// The live ProBudget demo, used by the hero caption and the project section.
+export const proBudgetDemo = "https://pro-budget.vercel.app";
+
 export const person = {
   name: "David Dai",
   email: "daviddaicareer@gmail.com",
@@ -67,7 +70,7 @@ export const impact = [
 // How the de-duplication ran, using only what the résumé says about it.
 export const matchingFlow = [
   { label: "Collect", text: "About 30,000 donor records" },
-  { label: "Match", text: "A reusable Power Query fuzzy-matching pipeline" },
+  { label: "Match", text: "A reusable Power Query fuzzy-matching pipeline for near-duplicates" },
   { label: "Flag", text: "Likely duplicates flagged automatically" },
   { label: "Review", text: "Human review for the final merge decision" },
 ] as const;
@@ -110,3 +113,47 @@ export const skills = [
     ],
   },
 ] as const;
+
+export type Evidence = "probudget" | "mymichlin" | "nutritrack" | "agencia" | "stvincent";
+
+// The places a skill is shown in use. The St Vincent internship has no project colour, so it
+// stays neutral rather than borrowing one.
+export const evidence = [
+  { id: "probudget", label: "ProBudget", hue: "probudget" },
+  { id: "mymichlin", label: "MyMichlin", hue: "mymichlin" },
+  { id: "nutritrack", label: "NutriTrack", hue: "nutritrack" },
+  { id: "agencia", label: "Agencia capstone", hue: "agencia" },
+  { id: "stvincent", label: "St Vincent", hue: null },
+] as const satisfies readonly { id: Evidence; label: string; hue: Hue | null }[];
+
+// Which projects each skill appears in, using only what the page already says about them: the
+// stack lines and details sheets, and the capstone and internship copy. A skill with no entry is
+// on the résumé but not evidenced here, so it stays plain rather than being linked on a guess.
+export const skillEvidence: Readonly<Record<string, readonly Evidence[]>> = {
+  TypeScript: ["probudget"],
+  "Next.js": ["probudget"],
+  React: ["probudget"],
+  Tailwind: ["probudget"],
+  Vercel: ["probudget"],
+  PostgreSQL: ["probudget"],
+  Azure: ["probudget"],
+  Swift: ["mymichlin"],
+  UIKit: ["mymichlin"],
+  Kotlin: ["nutritrack"],
+  "Jetpack Compose": ["nutritrack"],
+  Room: ["nutritrack"],
+  MVVM: ["nutritrack"],
+  Figma: ["nutritrack"],
+  CakePHP: ["agencia"],
+  MySQL: ["agencia"],
+  "Yjs (CRDT)": ["agencia"],
+  WebSocket: ["agencia"],
+  "Agile and Scrum": ["agencia"],
+  "Stakeholder engagement": ["agencia"],
+  "Backlog and acceptance criteria": ["agencia"],
+  Requirements: ["agencia", "stvincent"],
+  Documentation: ["agencia", "stvincent"],
+  "Power BI": ["stvincent"],
+  "Power Query": ["stvincent"],
+  "Microsoft Dynamics": ["stvincent"],
+};

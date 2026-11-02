@@ -30,8 +30,9 @@ export const viewport: Viewport = {
 };
 
 // Runs before first paint so a saved theme never flashes the wrong one. It sets the same
-// data-theme attribute that ThemeToggle writes; with none saved the system scheme applies.
-const applySavedTheme = `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+// data-theme attribute that ThemeToggle writes; with none saved the system scheme applies. It
+// also restores a paused background (MotionToggle), so the drift never starts and then stops.
+const applySavedTheme = `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;if(localStorage.getItem("motion")==="paused")document.documentElement.dataset.motion="paused"}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

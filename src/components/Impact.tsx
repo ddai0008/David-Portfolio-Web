@@ -18,7 +18,7 @@ export function Impact() {
 
         <dl className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:mt-24 md:grid-cols-2">
           {impact.map((stat) => (
-            <div key={stat.figure} className="reveal bg-paper-alt px-7 py-10 md:px-12 md:py-14">
+            <div key={stat.figure} className="reveal-soft bg-paper-alt px-7 py-10 md:px-12 md:py-14">
               <dt className="text-[clamp(3.25rem,9vw,6.5rem)] leading-none font-bold tracking-[-0.04em] tabular-nums">
                 {"spoken" in stat ? (
                   <>
@@ -43,7 +43,7 @@ export function Impact() {
           className="mt-16 grid grid-cols-2 gap-x-6 gap-y-9 md:mt-24 md:grid-cols-4 md:gap-x-8"
         >
           {matchingFlow.map((step, index) => (
-            <li key={step.label} className="flow-step reveal border-t-2 border-ink pt-5">
+            <li key={step.label} className="flow-step reveal-soft border-t-2 border-ink pt-5">
               <MatchGlyph step={index as 0 | 1 | 2 | 3} />
               <span
                 className="mt-4 block text-sm font-medium text-ink-muted tabular-nums"

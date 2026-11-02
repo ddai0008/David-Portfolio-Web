@@ -110,6 +110,12 @@
     color: var(--link);
   }
 
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+
   ::selection {
     background: color-mix(in srgb, var(--accent) 25%, transparent);
   }
@@ -408,6 +414,97 @@
   transform-origin: center;
 }
 
+/* ---------- Skills: dots show where a skill was used, and a chosen project underlines its skills ---------- */
+
+/* The underline exists only while a project is chosen. A transparent one would not stay
+   invisible: forced colours repaints every underline in the text colour. */
+.skill {
+  color: var(--mark-text, var(--ink-muted));
+  text-decoration-line: var(--mark-line, none);
+  text-decoration-color: var(--mark, currentColor);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.32em;
+  transition: color 200ms ease;
+}
+
+.skill-dots {
+  display: inline-flex;
+  gap: 0.2em;
+  margin-left: 0.45em;
+  vertical-align: 0.14em;
+}
+
+.skill-dot {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+/* No project colour: a ring, so the internship reads as a place without borrowing a hue. */
+.skill-dot[data-plain] {
+  box-sizing: border-box;
+  background: transparent;
+  border: 1.5px solid var(--ink-muted);
+}
+
+.skill-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.skill-pill:hover {
+  border-color: var(--ink-muted);
+}
+
+.skill-pill:has(input:checked) {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.skill-pill:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skills-explorer:has(#skill-probudget:checked) .skill[data-p~="probudget"] {
+  --mark: var(--hue-probudget);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-mymichlin:checked) .skill[data-p~="mymichlin"] {
+  --mark: var(--hue-mymichlin);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-nutritrack:checked) .skill[data-p~="nutritrack"] {
+  --mark: var(--hue-nutritrack);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-agencia:checked) .skill[data-p~="agencia"] {
+  --mark: var(--hue-agencia);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-stvincent:checked) .skill[data-p~="stvincent"] {
+  --mark: var(--ink);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+
 /* ---------- CSS device frames ---------- */
 
 .display-frame {
@@ -561,6 +658,18 @@
     }
   }
 
+  /* A smaller, shorter entrance for small items, so the page does not announce everything alike. */
+  @keyframes rise-soft {
+    from {
+      opacity: 0;
+      transform: translateY(0.875rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   @keyframes word-up {
     from {
       transform: translateY(110%);
@@ -671,8 +780,9 @@
     animation-delay: calc(var(--i, 0) * 90ms + 80ms);
   }
 
+  /* Three beats and it rests. The availability dot draws the eye once; it does not keep pulsing. */
   .signal-dot {
-    animation: pulse-ring 2.4s ease-out infinite;
+    animation: pulse-ring 2.4s ease-out 3;
   }
 
   .sheet[open] {
@@ -685,6 +795,12 @@
       animation: rise linear both;
       animation-timeline: view();
       animation-range: entry 4% entry 42%;
+    }
+
+    .reveal-soft {
+      animation: rise-soft linear both;
+      animation-timeline: view();
+      animation-range: entry 4% entry 36%;
     }
 
     .drift {
@@ -703,6 +819,18 @@
   .aurora > span {
     animation: aurora-drift var(--dur, 30s) ease-in-out var(--delay, 0s) infinite alternate;
     will-change: transform;
+  }
+
+  /* The footer button sets this. The drift loops for as long as the page is open, so a reader
+     must be able to stop it (WCAG 2.2.2), and the OS setting alone is not the only way. */
+  :root[data-motion="paused"] .aurora > span {
+    animation-play-state: paused;
+  }
+
+  /* AmbientGate marks a pool group that is out of view. Nobody can see it drift, and it would
+     still cost the main thread a frame at a time. */
+  .aurora[data-offscreen] > span {
+    animation-play-state: paused;
   }
 
   @supports (animation-timeline: view()) {
@@ -778,6 +906,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .motion-control {
+    display: none;
+  }
   html {
     scroll-behavior: auto;
   }
@@ -800,6 +931,81 @@
 @supports not (animation-timeline: scroll()) {
   .nav::after {
     opacity: 1;
+  }
+}
+
+/* ---------- High-contrast mode (Windows "contrast themes", forced colours) ----------
+   The browser replaces every background, border and text colour with the user's own. Fills drawn
+   with background-color vanish, so the capstone chart's lines, dots and pill would disappear.
+   Structure takes the system text colour; the project-colour dots are identity, so they opt out. */
+
+@media (forced-colors: active) {
+  .keep-colour,
+  .skill-dot:not([data-plain]) {
+    forced-color-adjust: none;
+  }
+
+  .team-line,
+  .team-dot {
+    background: CanvasText;
+  }
+
+  .skill-dot[data-plain] {
+    border-color: CanvasText;
+  }
+
+  /* The chosen project is shown by colour alone, and forced colours repaint both the text and the
+     border, so every pill would look alike. The system's own selected colours survive. */
+  .skill-pill:has(input:checked) {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+
+  /* On that fill the dots need their own contrast: the ring takes the text colour of the fill, and
+     the project colours get a halo so they do not sink into it. */
+  .skill-pill:has(input:checked) .skill-dot[data-plain] {
+    border-color: HighlightText;
+  }
+
+  .skill-pill:has(input:checked) .skill-dot:not([data-plain]) {
+    box-shadow: 0 0 0 1.5px HighlightText;
+  }
+
+  .team-hub {
+    border: 1px solid CanvasText;
+  }
+
+  .g-dot {
+    fill: CanvasText;
+  }
+
+  .g-line {
+    stroke: CanvasText;
+  }
+
+  .g-hot {
+    fill: Highlight;
+  }
+
+  .g-ring {
+    fill: none;
+    stroke: Highlight;
+  }
+
+  .aurora,
+  .wash {
+    display: none;
+  }
+
+  .nav::before {
+    background: Highlight;
+  }
+
+  /* The hairline under the bar is a background fill too, so it took the page colour. */
+  .nav::after {
+    background: CanvasText;
   }
 }
 

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { evidence, skillEvidence, skills } from "../../src/content/site";
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -101,7 +102,7 @@ test("every details button says which project it opens", async ({ page }) => {
     "Details on ProBudget",
     "Details on MyMichlin",
     "Details on NutriTrack",
-    "Capstone details on Agencia Change",
+    "Details on Agencia Change",
   ]) {
     await expect(page.getByRole("button", { name }), name).toHaveCount(1);
   }
@@ -245,7 +246,7 @@ test("content is fully visible with reduced motion", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
   await page.goto("/");
-  const dimmed = await page.locator(".reveal").evaluateAll((nodes) =>
+  const dimmed = await page.locator(".reveal, .reveal-soft").evaluateAll((nodes) =>
     nodes.filter((node) => getComputedStyle(node).opacity !== "1").length,
   );
   expect(dimmed).toBe(0);
@@ -315,7 +316,7 @@ test.describe("detail sheets", () => {
 
   test("the capstone sheet carries the sample-data note", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Capstone details" }).click();
+    await page.getByRole("button", { name: "Details on Agencia Change" }).click();
     const sheet = page.getByRole("dialog", { name: "Agencia Change" });
     await expect(sheet).toContainText("sample data only");
   });
@@ -448,6 +449,61 @@ test.describe("diagrams and colour", () => {
       });
     });
 
+    test("the background motion can be paused, and stays paused", async ({ page }) => {
+      await page.goto("/");
+      // Every pool in the group, not just the first: a rule that covered only some would pass.
+      const states = (scope: string) =>
+        page.evaluate(
+          (selector) =>
+            [...new Set([...document.querySelectorAll(selector)].map((node) => getComputedStyle(node).animationPlayState))],
+          scope,
+        );
+      const state = async () => {
+        const seen = await states("#top .aurora > span");
+        return seen.length === 1 ? seen[0] : seen.join("+");
+      };
+      expect(await state()).toBe("running");
+
+      await page.getByRole("button", { name: "Pause background motion" }).click();
+      expect(await states(".aurora > span")).toEqual(["paused"]);
+
+      // Remembered, and applied before the first paint so it never starts and then stops.
+      await page.reload();
+      await expect(page.getByRole("button", { name: "Resume background motion" })).toBeVisible();
+      expect(await states(".aurora > span")).toEqual(["paused"]);
+
+      await page.getByRole("button", { name: "Resume background motion" }).click();
+      // The button is in the footer, where the hero's pools are out of view and rest anyway.
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await expect.poll(state).toBe("running");
+    });
+
+    test("the colour pools drift only while they are on screen", async ({ page }) => {
+      await page.goto("/");
+      const playing = (selector: string) =>
+        page.evaluate(
+          (sel) => getComputedStyle(document.querySelector(`${sel} .aurora > span`)!).animationPlayState,
+          selector,
+        );
+      // At the top the hero's pools run; the contact's are a long way off, so they are paused.
+      await expect.poll(() => playing("#top")).toBe("running");
+      await expect.poll(() => playing("#contact")).toBe("paused");
+
+      await page.locator("#about").scrollIntoViewIfNeeded();
+      await expect.poll(() => playing("#top")).toBe("paused");
+
+      await page.locator("#contact").scrollIntoViewIfNeeded();
+      await expect.poll(() => playing("#contact")).toBe("running");
+    });
+
+    test("the availability dot pulses a few times and then rests", async ({ page }) => {
+      await page.goto("/");
+      const iterations = await page.evaluate(
+        () => getComputedStyle(document.querySelector(".signal-dot")!).animationIterationCount,
+      );
+      expect(iterations).toBe("3");
+    });
+
     test("counts the donor records up as they scroll into view", async ({ page }) => {
       await page.goto("/");
       const figure = page.locator("#impact dt").first();
@@ -456,6 +512,22 @@ test.describe("diagrams and colour", () => {
       await expect(figure.locator(".sr-only")).toHaveText("~30,000");
       await page.locator("#impact dl").scrollIntoViewIfNeeded();
       await expect(figure.locator("[aria-hidden='true']")).toHaveText("~30,000");
+    });
+
+    test("the progress line stays visible in high-contrast mode", async ({ page }) => {
+      await page.emulateMedia({ forcedColors: "active" });
+      await page.goto("/");
+      await page.evaluate(() =>
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+      );
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const line = getComputedStyle(document.querySelector(".nav")!, "::before");
+            return line.backgroundColor !== getComputedStyle(document.body).backgroundColor;
+          }),
+        )
+        .toBe(true);
     });
 
     test("draws a progress line in the project colours as the page scrolls", async ({ page }) => {
@@ -471,5 +543,127 @@ test.describe("diagrams and colour", () => {
       );
       await expect.poll(drawn).toBeGreaterThan(0.95);
     });
+  });
+});
+
+test.describe("recruiter path", () => {
+  test("puts LinkedIn and GitHub in the first screen and again in the footer", async ({ page }) => {
+    await page.goto("/");
+    for (const area of [page.locator("#top"), page.locator("footer")]) {
+      await expect(area.getByRole("link", { name: /^LinkedIn/ })).toHaveAttribute(
+        "href",
+        /linkedin\.com\/in\/david-dai-974ab5313/,
+      );
+      await expect(area.getByRole("link", { name: /^GitHub/ })).toHaveAttribute(
+        "href",
+        "https://github.com/ddai0008",
+      );
+    }
+  });
+
+  test("says what the hero picture is and links it to the real thing", async ({ page }) => {
+    await page.goto("/");
+    const caption = page.locator("#top").getByRole("link", { name: /ProBudget, live/ });
+    await expect(caption).toHaveAttribute("href", "https://pro-budget.vercel.app");
+    await expect(caption).toHaveAttribute("target", "_blank");
+  });
+
+  test("the background-motion button is not offered when the system already reduces motion", async ({
+    page,
+  }) => {
+    // The suite runs with reduced motion on, so there is nothing for it to pause.
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /background motion/ })).toBeHidden();
+  });
+
+  test("sets body copy so it does not end on a lone word", async ({ page }) => {
+    await page.goto("/");
+    const wrap = await page
+      .locator("#about p")
+      .first()
+      .evaluate((node) => getComputedStyle(node).getPropertyValue("text-wrap"));
+    expect(wrap).toContain("pretty");
+  });
+});
+
+test.describe("skills and their evidence", () => {
+  test("every skill with evidence is a listed skill, in a known place", () => {
+    const all = skills.flatMap((group) => group.items as readonly string[]);
+    // Each skill is listed once, so the highlighter's counts follow the evidence and nothing else.
+    expect(new Set(all).size).toBe(all.length);
+    const listed = new Set(all);
+    const places = new Set<string>(evidence.map((place) => place.id));
+    for (const [name, where] of Object.entries(skillEvidence)) {
+      expect(listed.has(name), `${name} is not a listed skill`).toBe(true);
+      for (const id of where) expect(places.has(id), `${name}: unknown place ${id}`).toBe(true);
+    }
+  });
+
+  test("choosing a project underlines its skills and nothing else", async ({ page }) => {
+    await page.goto("/");
+    const underlined = () =>
+      page
+        .locator(".skill")
+        .evaluateAll((nodes) =>
+          nodes
+            .filter((node) => getComputedStyle(node).textDecorationLine.includes("underline"))
+            .map((node) => node.getAttribute("data-p") ?? ""),
+        );
+    expect(await underlined()).toEqual([]);
+
+    await page.locator("label.skill-pill", { hasText: "ProBudget" }).click();
+    const expected = Object.values(skillEvidence).filter((where) => where.includes("probudget")).length;
+    const chosen = await underlined();
+    expect(chosen).toHaveLength(expected);
+    for (const where of chosen) expect(where).toContain("probudget");
+
+    await page.locator("label.skill-pill", { hasText: "None" }).click();
+    expect(await underlined()).toEqual([]);
+  });
+
+  test("a skill's evidence is named for assistive technology", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".skill", { hasText: "TypeScript" })).toContainText("(ProBudget)");
+    await expect(page.locator(".skill", { hasText: "Python" })).not.toContainText("(");
+  });
+});
+
+test.describe("high-contrast mode", () => {
+  test("keeps the capstone chart and the skills readable", async ({ page }) => {
+    await page.emulateMedia({ forcedColors: "active" });
+    await page.goto("/");
+    // Forced colours repaint every background, so anything drawn as a background fill would match the page.
+    const seen = await page.evaluate(() => {
+      const colour = (selector: string) => getComputedStyle(document.querySelector(selector)!);
+      return {
+        page: getComputedStyle(document.body).backgroundColor,
+        line: colour(".team-line").backgroundColor,
+        dot: colour(".team-dot").backgroundColor,
+        hub: colour(".team-hub").borderTopWidth,
+        // The one deliberate exception: project-colour dots identify a project, so they keep their
+        // own colour. Forced colours would paint them the page colour, whatever the palette is.
+        projectDot: colour(".skill-dot:not([data-plain])").backgroundColor,
+        availabilityDot: colour(".signal-dot").backgroundColor,
+        pills: [...document.querySelectorAll(".skill-pill")].map(
+          (node) => getComputedStyle(node).backgroundColor,
+        ),
+        glyphDot: colour(".g-dot").fill,
+        navLine: getComputedStyle(document.querySelector(".nav")!, "::after").backgroundColor,
+        underlined: [...document.querySelectorAll(".skill")].filter((node) =>
+          getComputedStyle(node).textDecorationLine.includes("underline"),
+        ).length,
+      };
+    });
+    expect(seen.line).not.toBe(seen.page);
+    expect(seen.dot).not.toBe(seen.page);
+    expect(seen.hub).toBe("1px");
+    expect(seen.glyphDot).not.toBe(seen.page);
+    expect(seen.navLine).not.toBe(seen.page);
+    expect(seen.projectDot).not.toBe(seen.page);
+    expect(seen.availabilityDot).not.toBe(seen.page);
+    // "None" is chosen to begin with, so it alone must look different from the other pills.
+    expect(seen.pills[0]).not.toBe(seen.pills[1]);
+    expect(new Set(seen.pills.slice(1)).size).toBe(1);
+    expect(seen.underlined).toBe(0);
   });
 });

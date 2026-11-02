@@ -77,7 +77,7 @@ export function Leadership() {
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-2.5 rounded-full border border-hairline bg-paper-raised px-5 py-2.5 text-sm font-medium">
                 <span
-                  className="size-2 rounded-full"
+                  className="keep-colour size-2 rounded-full"
                   style={{ background: "var(--hue-agencia)" }}
                   aria-hidden="true"
                 />
@@ -89,7 +89,7 @@ export function Leadership() {
                 style={vars({ "--from": "5%", "--to": "30%" })}
                 aria-hidden="true"
               />
-              <span className="rounded-full bg-ink px-6 py-3 text-center text-paper">
+              <span className="team-hub rounded-full bg-ink px-6 py-3 text-center text-paper">
                 <span className="block font-semibold">David</span>
                 <span className="block text-xs">Team Lead and client liaison</span>
               </span>
@@ -125,7 +125,7 @@ export function Leadership() {
                       {Array.from({ length: group.count }, (_, index) => (
                         <span
                           key={index}
-                          className={`size-5 rounded-full bg-ink md:size-7 ${
+                          className={`team-dot size-5 rounded-full bg-ink md:size-7 ${
                             "note" in group && index === 0
                               ? "outline-2 outline-offset-4 outline-signal"
                               : ""
@@ -150,7 +150,7 @@ export function Leadership() {
 
         <div className="mt-16 grid gap-12 md:mt-24 md:grid-cols-3 md:gap-10">
           {beats.map((beat) => (
-            <div key={beat.verb} className="reveal">
+            <div key={beat.verb} className="reveal-soft">
               <h3 className="title">{beat.verb}</h3>
               <p className="mt-3 text-[1.0625rem] leading-relaxed text-ink-muted">{beat.text}</p>
             </div>
@@ -158,7 +158,7 @@ export function Leadership() {
         </div>
 
         <div className="reveal mt-14">
-          <DetailsSheet label="Capstone details" eyebrow="Industry capstone" title="Agencia Change">
+          <DetailsSheet label="Details" eyebrow="Industry capstone" title="Agencia Change">
             <SheetSection title="Role">
               <p>
                 Team Lead, Client Liaison and Developer, August 2026 to present, on a Monash
