@@ -9,6 +9,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:webkit": "ENGINE=webkit playwright test --config playwright.engines.config.ts",
+    "test:firefox": "ENGINE=firefox playwright test --config playwright.engines.config.ts",
     "images": "node scripts/prepare-images.mjs",
     "og": "node scripts/og-card.mjs"
   },
