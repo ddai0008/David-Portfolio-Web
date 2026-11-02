@@ -22,11 +22,11 @@ export function Credentials() {
           </p>
           <p>
             <span className={figure}>{academics.wam}</span>
-            <span className="mt-3 block text-[1.0625rem] text-ink-muted">WAM</span>
+            <span className="mt-3 block text-[1.0625rem] text-ink-muted">WAM, weighted average mark</span>
           </p>
         </div>
 
-        <div className="reveal md:col-span-7">
+        <div className="reveal-soft md:col-span-7">
           <h3 className="eyebrow">High Distinction</h3>
           <ul className="mt-4 divide-y divide-hairline border-y border-hairline">
             {highDistinction.map((subject) => (
@@ -40,7 +40,7 @@ export function Credentials() {
           </p>
         </div>
 
-        <div className="reveal flex items-start gap-5 self-start rounded-3xl border border-hairline bg-paper-raised px-6 py-6 md:col-span-5">
+        <div className="reveal-soft flex items-start gap-5 self-start rounded-3xl border border-hairline bg-paper-raised px-6 py-6 md:col-span-5">
           <svg
             width="40"
             height="40"

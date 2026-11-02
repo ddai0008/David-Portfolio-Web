@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { evidence, skillEvidence, skills } from "../../src/content/site";
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -101,7 +102,7 @@ test("every details button says which project it opens", async ({ page }) => {
     "Details on ProBudget",
     "Details on MyMichlin",
     "Details on NutriTrack",
-    "Capstone details on Agencia Change",
+    "Details on Agencia Change",
   ]) {
     await expect(page.getByRole("button", { name }), name).toHaveCount(1);
   }
@@ -245,7 +246,7 @@ test("content is fully visible with reduced motion", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
   await page.goto("/");
-  const dimmed = await page.locator(".reveal").evaluateAll((nodes) =>
+  const dimmed = await page.locator(".reveal, .reveal-soft").evaluateAll((nodes) =>
     nodes.filter((node) => getComputedStyle(node).opacity !== "1").length,
   );
   expect(dimmed).toBe(0);
@@ -315,7 +316,7 @@ test.describe("detail sheets", () => {
 
   test("the capstone sheet carries the sample-data note", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Capstone details" }).click();
+    await page.getByRole("button", { name: "Details on Agencia Change" }).click();
     const sheet = page.getByRole("dialog", { name: "Agencia Change" });
     await expect(sheet).toContainText("sample data only");
   });
@@ -448,6 +449,32 @@ test.describe("diagrams and colour", () => {
       });
     });
 
+    test("the background motion can be paused, and stays paused", async ({ page }) => {
+      await page.goto("/");
+      const state = () =>
+        page.evaluate(() => getComputedStyle(document.querySelector(".aurora > span")!).animationPlayState);
+      expect(await state()).toBe("running");
+
+      await page.getByRole("button", { name: "Pause background motion" }).click();
+      expect(await state()).toBe("paused");
+
+      // Remembered, and applied before the first paint so it never starts and then stops.
+      await page.reload();
+      await expect(page.getByRole("button", { name: "Resume background motion" })).toBeVisible();
+      expect(await state()).toBe("paused");
+
+      await page.getByRole("button", { name: "Resume background motion" }).click();
+      expect(await state()).toBe("running");
+    });
+
+    test("the availability dot pulses a few times and then rests", async ({ page }) => {
+      await page.goto("/");
+      const iterations = await page.evaluate(
+        () => getComputedStyle(document.querySelector(".signal-dot")!).animationIterationCount,
+      );
+      expect(iterations).toBe("3");
+    });
+
     test("counts the donor records up as they scroll into view", async ({ page }) => {
       await page.goto("/");
       const figure = page.locator("#impact dt").first();
@@ -471,5 +498,108 @@ test.describe("diagrams and colour", () => {
       );
       await expect.poll(drawn).toBeGreaterThan(0.95);
     });
+  });
+});
+
+test.describe("recruiter path", () => {
+  test("puts LinkedIn and GitHub in the first screen and again in the footer", async ({ page }) => {
+    await page.goto("/");
+    for (const area of [page.locator("#top"), page.locator("footer")]) {
+      await expect(area.getByRole("link", { name: /^LinkedIn/ })).toHaveAttribute(
+        "href",
+        /linkedin\.com\/in\/david-dai-974ab5313/,
+      );
+      await expect(area.getByRole("link", { name: /^GitHub/ })).toHaveAttribute(
+        "href",
+        "https://github.com/ddai0008",
+      );
+    }
+  });
+
+  test("says what the hero picture is and links it to the real thing", async ({ page }) => {
+    await page.goto("/");
+    const caption = page.locator("#top").getByRole("link", { name: /ProBudget, live/ });
+    await expect(caption).toHaveAttribute("href", "https://pro-budget.vercel.app");
+    await expect(caption).toHaveAttribute("target", "_blank");
+  });
+
+  test("the background-motion button is not offered when the system already reduces motion", async ({
+    page,
+  }) => {
+    // The suite runs with reduced motion on, so there is nothing for it to pause.
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /background motion/ })).toBeHidden();
+  });
+
+  test("sets body copy so it does not end on a lone word", async ({ page }) => {
+    await page.goto("/");
+    const wrap = await page
+      .locator("#about p")
+      .first()
+      .evaluate((node) => getComputedStyle(node).getPropertyValue("text-wrap"));
+    expect(wrap).toContain("pretty");
+  });
+});
+
+test.describe("skills and their evidence", () => {
+  test("every skill with evidence is a listed skill, in a known place", () => {
+    const listed = new Set(skills.flatMap((group) => group.items as readonly string[]));
+    const places = new Set<string>(evidence.map((place) => place.id));
+    for (const [name, where] of Object.entries(skillEvidence)) {
+      expect(listed.has(name), `${name} is not a listed skill`).toBe(true);
+      for (const id of where) expect(places.has(id), `${name}: unknown place ${id}`).toBe(true);
+    }
+  });
+
+  test("choosing a project underlines its skills and nothing else", async ({ page }) => {
+    await page.goto("/");
+    const underlined = () =>
+      page
+        .locator(".skill")
+        .evaluateAll((nodes) =>
+          nodes
+            .filter((node) => getComputedStyle(node).textDecorationLine.includes("underline"))
+            .map((node) => node.getAttribute("data-p") ?? ""),
+        );
+    expect(await underlined()).toEqual([]);
+
+    await page.locator("label.skill-pill", { hasText: "ProBudget" }).click();
+    const expected = Object.values(skillEvidence).filter((where) => where.includes("probudget")).length;
+    const chosen = await underlined();
+    expect(chosen).toHaveLength(expected);
+    for (const where of chosen) expect(where).toContain("probudget");
+
+    await page.locator("label.skill-pill", { hasText: "None" }).click();
+    expect(await underlined()).toEqual([]);
+  });
+
+  test("a skill's evidence is named for assistive technology", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".skill", { hasText: "TypeScript" })).toContainText("(ProBudget)");
+    await expect(page.locator(".skill", { hasText: "Python" })).not.toContainText("(");
+  });
+});
+
+test.describe("high-contrast mode", () => {
+  test("keeps the capstone chart and the skills readable", async ({ page }) => {
+    await page.emulateMedia({ forcedColors: "active" });
+    await page.goto("/");
+    // Forced colours repaint every background, so anything drawn as a background fill would match the page.
+    const seen = await page.evaluate(() => {
+      const colour = (selector: string) => getComputedStyle(document.querySelector(selector)!);
+      return {
+        page: getComputedStyle(document.body).backgroundColor,
+        line: colour(".team-line").backgroundColor,
+        dot: colour(".team-dot").backgroundColor,
+        hub: colour(".team-hub").borderTopWidth,
+        underlined: [...document.querySelectorAll(".skill")].filter((node) =>
+          getComputedStyle(node).textDecorationLine.includes("underline"),
+        ).length,
+      };
+    });
+    expect(seen.line).not.toBe(seen.page);
+    expect(seen.dot).not.toBe(seen.page);
+    expect(seen.hub).toBe("1px");
+    expect(seen.underlined).toBe(0);
   });
 });

@@ -51,4 +51,4 @@ Binding, confirmed by David. Critique and polish refine inside these and do not 
 5. **Only what he can stand behind.** No claim, figure or screen that overstates.
 
 ## Accessibility & Inclusion
-WCAG AA contrast, keyboard access, visible focus, and `prefers-reduced-motion` honoured throughout. The page is checked with axe in light and dark, including the manual theme override and an open detail sheet. Links that open a new tab say so to assistive technology.
+WCAG AA contrast, keyboard access, visible focus, and `prefers-reduced-motion` honoured throughout. High-contrast (forced colours) mode keeps the diagrams and dots readable, and the slow background drift can be paused from the footer and stays paused. The page is checked with axe in light and dark, including the manual theme override and an open detail sheet. Links that open a new tab say so to assistive technology.
