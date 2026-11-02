@@ -948,6 +948,15 @@
     border-color: CanvasText;
   }
 
+  /* The chosen project is shown by colour alone, and forced colours repaint both the text and the
+     border, so every pill would look alike. The system's own selected colours survive. */
+  .skill-pill:has(input:checked) {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+
   .team-hub {
     border: 1px solid CanvasText;
   }
