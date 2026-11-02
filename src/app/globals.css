@@ -128,7 +128,9 @@
 /* ---------- Type scale. One idea per screen, said big. ---------- */
 
 @utility display {
-  font-size: clamp(3.5rem, 11vw, 8rem);
+  /* Scales with the screen's height as well as its width, so on a short laptop the name does not
+     push the facts under the hero off the first screen. */
+  font-size: clamp(3.5rem, min(11vw, 15.5svh), 8rem);
   line-height: 0.95;
   font-weight: 700;
   letter-spacing: -0.034em;

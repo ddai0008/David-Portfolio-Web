@@ -98,10 +98,11 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
   await test.step("detail sheets still open from the stage", async () => {
     await jumpTo(page, "mymichlin");
     await expect(activeTitle(page)).toHaveText("MyMichlin");
-    await page
-      .locator('#work article[data-active="true"]')
-      .getByRole("button", { name: "Details" })
-      .click();
+    // The panel eases into place for half a second. Under load the click's "stable" check can pass
+    // between dropped frames and land on a button that has moved, so wait for it to finish.
+    const panel = page.locator('#work article[data-active="true"]');
+    await expect(panel).toHaveCSS("transform", "none");
+    await panel.getByRole("button", { name: "Details" }).click();
     const sheet = page.getByRole("dialog", { name: "MyMichlin" });
     await expect(sheet).toBeVisible();
     await page.keyboard.press("Escape");
