@@ -754,11 +754,14 @@ test.describe("dot grid", () => {
     }
   });
 
-  // The grid sits behind text, so a line of muted text, the weakest text on the page, must stay
-  // readable even when a glyph lands on the centre of a dot. This measures every such line against
-  // the mask's real value at its position (the same maths as the CSS gradient), not a typical one.
+  // The grid sits behind text, so text must stay readable even when a glyph lands on the centre of
+  // a dot. This measures every line of text in the five sections that has no background of its own
+  // (the cards, buttons and pills cover the grid) against the mask's real value at its position,
+  // using the same maths as the CSS gradient. The mask is highest nearest its centre in the hero and
+  // farthest from it elsewhere, so each line is sampled at its corners and at the point closest to
+  // that centre.
   for (const scheme of ["light", "dark"] as const) {
-    test(`muted text stays readable over the grid (${scheme})`, async ({ page }) => {
+    test(`text stays readable over the grid (${scheme})`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });
       await page.goto("/");
       const sections = await page.evaluate(() => {
@@ -784,7 +787,6 @@ test.describe("dot grid", () => {
         };
         const strength = parseFloat(token("--dot-strength")) / 100;
         const ink = hex(token("--ink"));
-        const muted = hex(token("--ink-muted"));
         const paper = hex(token("--paper"));
 
         return [...document.querySelectorAll<HTMLElement>(".dots")].map((section) => {
@@ -806,42 +808,65 @@ test.describe("dot grid", () => {
           const surface = transparent ? paper : numbers(style.backgroundColor);
 
           let worst = { margin: Infinity, contrast: 0, need: 0, text: "" };
+          let measured = 0;
           for (const el of section.querySelectorAll<HTMLElement>("*")) {
             if (el.closest("[aria-hidden='true'], .sr-only")) continue;
-            const computed = getComputedStyle(el);
-            if (numbers(computed.color).join() !== muted.join()) continue;
             if (![...el.childNodes].some((node) => node.nodeType === 3 && node.textContent?.trim())) continue;
+            const computed = getComputedStyle(el);
             if (computed.display === "none" || computed.visibility === "hidden") continue;
-            const range = document.createRange();
-            range.selectNodeContents(el);
+            // Text on a card, button or pill sits on that fill, with the grid behind it.
+            let covered = false;
+            for (let node: HTMLElement | null = el; node && node !== section; node = node.parentElement) {
+              const fill = getComputedStyle(node).backgroundColor;
+              if (fill !== "transparent" && !fill.endsWith(", 0)")) covered = true;
+            }
+            if (covered) continue;
+            // Only this element's own text: a nested element is measured on its own, and the
+            // visually hidden text inside a link reports a wide rect that nobody can see.
+            const lines: DOMRect[] = [];
+            for (const node of el.childNodes) {
+              if (node.nodeType !== 3 || !node.textContent?.trim()) continue;
+              const range = document.createRange();
+              range.selectNodeContents(node);
+              lines.push(...range.getClientRects());
+            }
             let alpha = 0;
-            for (const line of range.getClientRects()) {
+            for (const line of lines) {
               if (!line.width) continue;
+              const nearest = [
+                Math.min(Math.max(cx + box.left, line.left), line.right),
+                Math.min(Math.max(cy + box.top, line.top), line.bottom),
+              ];
               for (const [x, y] of [
                 [line.left, line.top],
                 [line.right, line.top],
                 [line.left, line.bottom],
                 [line.right, line.bottom],
+                nearest,
               ]) {
                 alpha = Math.max(alpha, alphaAt(x - box.left, y - box.top));
               }
             }
             const dot = surface.map((value, i) => value + (ink[i] - value) * strength * alpha);
+            const channels = computed.color.match(/[\d.]+/g)?.map(Number) ?? [];
+            const opacity = channels.length > 3 ? channels[3] : 1;
+            const text = channels.slice(0, 3).map((value, i) => value * opacity + dot[i] * (1 - opacity));
             const size = parseFloat(computed.fontSize);
             const large = size >= 24 || (size >= 18.66 && parseInt(computed.fontWeight) >= 700);
             const need = large ? 3 : 4.5;
-            const ratio = contrast(muted, dot);
+            const ratio = contrast(text, dot);
+            measured++;
             if (ratio - need < worst.margin) {
               worst = { margin: ratio - need, contrast: ratio, need, text: (el.textContent ?? "").trim().slice(0, 40) };
             }
           }
-          return { id: section.id, ...worst };
+          return { id: section.id, measured, ...worst };
         });
       });
       expect(sections).toHaveLength(5);
       for (const section of sections) {
-        // Every section has some muted text, so a finding of none means the check found nothing.
-        expect(section.text, `${section.id}: no muted text was measured`).not.toBe("");
+        // Every section has text on bare paper, so measuring none means the check found nothing.
+        expect(section.measured, `${section.id}: no text was measured`).toBeGreaterThan(3);
         expect(
           section.contrast,
           `${section.id}: "${section.text}" is ${section.contrast.toFixed(2)}:1 on a dot, needs ${section.need}`,
