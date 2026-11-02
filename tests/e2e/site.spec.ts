@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { evidence, skillEvidence, skills } from "../../src/content/site";
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -25,6 +26,86 @@ test("says what David is, with the facts that matter", async ({ page }) => {
   await expect(body).toContainText("82.1");
   await expect(body).toContainText("Agencia Change");
   await expect(body).toContainText("Student Ambassador");
+});
+
+test("tells a recruiter the role, work rights and availability up top", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.locator("#top");
+  await expect(hero).toContainText("graduate software engineering role");
+  await expect(hero).toContainText("Australian citizen");
+  await expect(hero).toContainText("Available from December 2026");
+});
+
+test("puts the facts a recruiter scans for just under the hero", async ({ page }, testInfo) => {
+  await page.goto("/");
+  const strip = page.getByRole("region", { name: "At a glance" });
+  for (const fact of ["3.70", "82.1", "6", "~30,000", "DP-900"]) {
+    await expect(strip).toContainText(fact);
+  }
+
+  // On laptop-sized screens, short ones included, the strip begins before the first scroll.
+  test.skip(testInfo.project.name === "mobile", "a phone's first screen is the hero alone");
+  for (const [width, height] of [
+    [1440, 900],
+    [1366, 768],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const box = await strip.boundingBox();
+    expect(box?.y ?? Infinity, `${width}x${height}`).toBeLessThan(height);
+  }
+});
+
+test("says what each project did without opening a sheet", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.locator("#probudget").getByText("The database is moving to Azure, where"),
+  ).toBeVisible();
+  await expect(
+    page.locator("#mymichlin").getByText("Custom map annotations, built with async Swift."),
+  ).toBeVisible();
+  await expect(
+    page.locator("#nutritrack").getByText("Material Design interface designed in Figma"),
+  ).toBeVisible();
+});
+
+test("claims only what it can back up", async ({ page }) => {
+  await page.goto("/");
+  const body = page.locator("body");
+  // ProBudget is live with a demo account, not a "production" product with real users.
+  await expect(body).not.toContainText(/production finance/i);
+  // A 100-record audit proves matches were correct, not recall, so it is stated as a count.
+  await expect(page.locator("#impact")).toContainText("100 of 100");
+  await expect(body).not.toContainText("100% precision");
+  // The time-limited wording goes stale the week he graduates.
+  await expect(body).not.toContainText(/graduating November 2026|final-year/i);
+});
+
+test("shows the matching flow in order", async ({ page }) => {
+  await page.goto("/");
+  const steps = page.getByRole("list", { name: "How the matching worked" }).getByRole("listitem");
+  await expect(steps).toHaveCount(4);
+  await expect(steps.nth(0)).toContainText("Collect");
+  await expect(steps.nth(3)).toContainText("Review");
+});
+
+test("lays Education out across the row, not down the left", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "it stacks on a phone");
+  await page.goto("/");
+  const width = page.viewportSize()?.width ?? 0;
+  const gpa = await page.locator("#education").getByText("3.70", { exact: true }).boundingBox();
+  expect(gpa?.x ?? 0).toBeGreaterThan(width / 2);
+});
+
+test("every details button says which project it opens", async ({ page }) => {
+  await page.goto("/");
+  for (const name of [
+    "Details on ProBudget",
+    "Details on MyMichlin",
+    "Details on NutriTrack",
+    "Details on Agencia Change",
+  ]) {
+    await expect(page.getByRole("button", { name }), name).toHaveCount(1);
+  }
 });
 
 test("offers the résumé download and the contact links", async ({ page }) => {
@@ -165,7 +246,7 @@ test("content is fully visible with reduced motion", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
   await page.goto("/");
-  const dimmed = await page.locator(".reveal").evaluateAll((nodes) =>
+  const dimmed = await page.locator(".reveal, .reveal-soft").evaluateAll((nodes) =>
     nodes.filter((node) => getComputedStyle(node).opacity !== "1").length,
   );
   expect(dimmed).toBe(0);
@@ -235,7 +316,7 @@ test.describe("detail sheets", () => {
 
   test("the capstone sheet carries the sample-data note", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Capstone details" }).click();
+    await page.getByRole("button", { name: "Details on Agencia Change" }).click();
     const sheet = page.getByRole("dialog", { name: "Agencia Change" });
     await expect(sheet).toContainText("sample data only");
   });
@@ -273,6 +354,32 @@ test.describe("navigation", () => {
     await expect(bar.locator("[aria-current]")).toHaveCount(0);
   });
 
+  test("the section links collapse into a menu on a phone", async ({ page }, testInfo) => {
+    await page.goto("/");
+    const button = page.getByRole("button", { name: "Menu" });
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+
+    if (testInfo.project.name !== "mobile") {
+      await expect(button).toBeHidden();
+      return;
+    }
+
+    await expect(menu).toBeHidden();
+    await button.click();
+    await expect(menu).toBeVisible();
+
+    // Escape closes it and puts focus back on the button.
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+    await expect(button).toBeFocused();
+
+    // Choosing a section goes there and closes the menu rather than leaving it over the page.
+    await button.click();
+    await menu.getByRole("link", { name: "Work" }).click();
+    await expect(menu).toBeHidden();
+    await expect(page).toHaveURL(/#work$/);
+  });
+
   test("skip link jumps to the content", async ({ page }) => {
     await page.goto("/");
     await page.keyboard.press("Tab");
@@ -280,5 +387,283 @@ test.describe("navigation", () => {
     await expect(skip).toBeFocused();
     await skip.press("Enter");
     await expect(page).toHaveURL(/#main$/);
+  });
+});
+
+test.describe("diagrams and colour", () => {
+  test("shows the capstone team as a chart around David, with decorative lines", async ({ page }) => {
+    await page.goto("/");
+    const leadership = page.locator("#leadership");
+    await expect(leadership).toContainText("Agencia Change");
+    await expect(leadership).toContainText("Team Lead and client liaison");
+    // The list is what assistive technology reads; the lines joining it up are only decoration.
+    await expect(page.getByRole("list", { name: "Team make-up" }).getByRole("listitem")).toHaveCount(3);
+    const lines = leadership.locator(".team-line");
+    expect(await lines.count()).toBe(6);
+    for (const line of await lines.all()) await expect(line).toHaveAttribute("aria-hidden", "true");
+  });
+
+  test("shows every diagram finished when motion is off", async ({ page }) => {
+    await page.goto("/");
+    const transforms = await page
+      .locator(".team-line")
+      .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).transform));
+    expect(new Set(transforms)).toEqual(new Set(["none"]));
+
+    // The merge step already shows its pairs merged, and the progress line is not drawn at all.
+    const merged = await page
+      .locator("#impact .g-merge")
+      .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).transform));
+    expect(merged).toHaveLength(8);
+    for (const transform of merged) expect(transform).not.toBe("none");
+    const progress = await page.evaluate(
+      () => getComputedStyle(document.querySelector(".nav")!, "::before").content,
+    );
+    expect(progress).toMatch(/^(none|normal)$/);
+  });
+
+  test("keeps the colour washes within the agreed strength", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/");
+    const strengths = await page.evaluate(() => {
+      const style = getComputedStyle(document.documentElement);
+      return ["--aurora-strength", "--wash-strength"].map((name) =>
+        parseFloat(style.getPropertyValue(name)),
+      );
+    });
+    for (const strength of strengths) expect(strength).toBeLessThanOrEqual(8);
+    // Decorative, so none of it is announced.
+    for (const wash of await page.locator(".aurora, .wash").all()) {
+      await expect(wash).toHaveAttribute("aria-hidden", "true");
+    }
+  });
+
+  test.describe("with motion", () => {
+    test.use({ reducedMotion: "no-preference" });
+
+    // These are about the count-up and the progress line, not the 3D stage. Data saver keeps the
+    // stage off, so its software-rendered WebGL cannot starve the animation frames under load.
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, "connection", { value: { saveData: true } });
+      });
+    });
+
+    test("the background motion can be paused, and stays paused", async ({ page }) => {
+      await page.goto("/");
+      // Every pool in the group, not just the first: a rule that covered only some would pass.
+      const states = (scope: string) =>
+        page.evaluate(
+          (selector) =>
+            [...new Set([...document.querySelectorAll(selector)].map((node) => getComputedStyle(node).animationPlayState))],
+          scope,
+        );
+      const state = async () => {
+        const seen = await states("#top .aurora > span");
+        return seen.length === 1 ? seen[0] : seen.join("+");
+      };
+      expect(await state()).toBe("running");
+
+      await page.getByRole("button", { name: "Pause background motion" }).click();
+      expect(await states(".aurora > span")).toEqual(["paused"]);
+
+      // Remembered, and applied before the first paint so it never starts and then stops.
+      await page.reload();
+      await expect(page.getByRole("button", { name: "Resume background motion" })).toBeVisible();
+      expect(await states(".aurora > span")).toEqual(["paused"]);
+
+      await page.getByRole("button", { name: "Resume background motion" }).click();
+      // The button is in the footer, where the hero's pools are out of view and rest anyway.
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await expect.poll(state).toBe("running");
+    });
+
+    test("the colour pools drift only while they are on screen", async ({ page }) => {
+      await page.goto("/");
+      const playing = (selector: string) =>
+        page.evaluate(
+          (sel) => getComputedStyle(document.querySelector(`${sel} .aurora > span`)!).animationPlayState,
+          selector,
+        );
+      // At the top the hero's pools run; the contact's are a long way off, so they are paused.
+      await expect.poll(() => playing("#top")).toBe("running");
+      await expect.poll(() => playing("#contact")).toBe("paused");
+
+      await page.locator("#about").scrollIntoViewIfNeeded();
+      await expect.poll(() => playing("#top")).toBe("paused");
+
+      await page.locator("#contact").scrollIntoViewIfNeeded();
+      await expect.poll(() => playing("#contact")).toBe("running");
+    });
+
+    test("the availability dot pulses a few times and then rests", async ({ page }) => {
+      await page.goto("/");
+      const iterations = await page.evaluate(
+        () => getComputedStyle(document.querySelector(".signal-dot")!).animationIterationCount,
+      );
+      expect(iterations).toBe("3");
+    });
+
+    test("counts the donor records up as they scroll into view", async ({ page }) => {
+      await page.goto("/");
+      const figure = page.locator("#impact dt").first();
+      // Below the fold it waits at zero, while the spoken number is always the finished one.
+      await expect(figure.locator("[aria-hidden='true']")).toHaveText("~0");
+      await expect(figure.locator(".sr-only")).toHaveText("~30,000");
+      await page.locator("#impact dl").scrollIntoViewIfNeeded();
+      await expect(figure.locator("[aria-hidden='true']")).toHaveText("~30,000");
+    });
+
+    test("the progress line stays visible in high-contrast mode", async ({ page }) => {
+      await page.emulateMedia({ forcedColors: "active" });
+      await page.goto("/");
+      await page.evaluate(() =>
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+      );
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const line = getComputedStyle(document.querySelector(".nav")!, "::before");
+            return line.backgroundColor !== getComputedStyle(document.body).backgroundColor;
+          }),
+        )
+        .toBe(true);
+    });
+
+    test("draws a progress line in the project colours as the page scrolls", async ({ page }) => {
+      await page.goto("/");
+      const drawn = () =>
+        page.evaluate(
+          () =>
+            new DOMMatrix(getComputedStyle(document.querySelector(".nav")!, "::before").transform).a,
+        );
+      await expect.poll(drawn).toBeLessThan(0.05);
+      await page.evaluate(() =>
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+      );
+      await expect.poll(drawn).toBeGreaterThan(0.95);
+    });
+  });
+});
+
+test.describe("recruiter path", () => {
+  test("puts LinkedIn and GitHub in the first screen and again in the footer", async ({ page }) => {
+    await page.goto("/");
+    for (const area of [page.locator("#top"), page.locator("footer")]) {
+      await expect(area.getByRole("link", { name: /^LinkedIn/ })).toHaveAttribute(
+        "href",
+        /linkedin\.com\/in\/david-dai-974ab5313/,
+      );
+      await expect(area.getByRole("link", { name: /^GitHub/ })).toHaveAttribute(
+        "href",
+        "https://github.com/ddai0008",
+      );
+    }
+  });
+
+  test("says what the hero picture is and links it to the real thing", async ({ page }) => {
+    await page.goto("/");
+    const caption = page.locator("#top").getByRole("link", { name: /ProBudget, live/ });
+    await expect(caption).toHaveAttribute("href", "https://pro-budget.vercel.app");
+    await expect(caption).toHaveAttribute("target", "_blank");
+  });
+
+  test("the background-motion button is not offered when the system already reduces motion", async ({
+    page,
+  }) => {
+    // The suite runs with reduced motion on, so there is nothing for it to pause.
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /background motion/ })).toBeHidden();
+  });
+
+  test("sets body copy so it does not end on a lone word", async ({ page }) => {
+    await page.goto("/");
+    const wrap = await page
+      .locator("#about p")
+      .first()
+      .evaluate((node) => getComputedStyle(node).getPropertyValue("text-wrap"));
+    expect(wrap).toContain("pretty");
+  });
+});
+
+test.describe("skills and their evidence", () => {
+  test("every skill with evidence is a listed skill, in a known place", () => {
+    const all = skills.flatMap((group) => group.items as readonly string[]);
+    // Each skill is listed once, so the highlighter's counts follow the evidence and nothing else.
+    expect(new Set(all).size).toBe(all.length);
+    const listed = new Set(all);
+    const places = new Set<string>(evidence.map((place) => place.id));
+    for (const [name, where] of Object.entries(skillEvidence)) {
+      expect(listed.has(name), `${name} is not a listed skill`).toBe(true);
+      for (const id of where) expect(places.has(id), `${name}: unknown place ${id}`).toBe(true);
+    }
+  });
+
+  test("choosing a project underlines its skills and nothing else", async ({ page }) => {
+    await page.goto("/");
+    const underlined = () =>
+      page
+        .locator(".skill")
+        .evaluateAll((nodes) =>
+          nodes
+            .filter((node) => getComputedStyle(node).textDecorationLine.includes("underline"))
+            .map((node) => node.getAttribute("data-p") ?? ""),
+        );
+    expect(await underlined()).toEqual([]);
+
+    await page.locator("label.skill-pill", { hasText: "ProBudget" }).click();
+    const expected = Object.values(skillEvidence).filter((where) => where.includes("probudget")).length;
+    const chosen = await underlined();
+    expect(chosen).toHaveLength(expected);
+    for (const where of chosen) expect(where).toContain("probudget");
+
+    await page.locator("label.skill-pill", { hasText: "None" }).click();
+    expect(await underlined()).toEqual([]);
+  });
+
+  test("a skill's evidence is named for assistive technology", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".skill", { hasText: "TypeScript" })).toContainText("(ProBudget)");
+    await expect(page.locator(".skill", { hasText: "Python" })).not.toContainText("(");
+  });
+});
+
+test.describe("high-contrast mode", () => {
+  test("keeps the capstone chart and the skills readable", async ({ page }) => {
+    await page.emulateMedia({ forcedColors: "active" });
+    await page.goto("/");
+    // Forced colours repaint every background, so anything drawn as a background fill would match the page.
+    const seen = await page.evaluate(() => {
+      const colour = (selector: string) => getComputedStyle(document.querySelector(selector)!);
+      return {
+        page: getComputedStyle(document.body).backgroundColor,
+        line: colour(".team-line").backgroundColor,
+        dot: colour(".team-dot").backgroundColor,
+        hub: colour(".team-hub").borderTopWidth,
+        // The one deliberate exception: project-colour dots identify a project, so they keep their
+        // own colour. Forced colours would paint them the page colour, whatever the palette is.
+        projectDot: colour(".skill-dot:not([data-plain])").backgroundColor,
+        availabilityDot: colour(".signal-dot").backgroundColor,
+        pills: [...document.querySelectorAll(".skill-pill")].map(
+          (node) => getComputedStyle(node).backgroundColor,
+        ),
+        glyphDot: colour(".g-dot").fill,
+        navLine: getComputedStyle(document.querySelector(".nav")!, "::after").backgroundColor,
+        underlined: [...document.querySelectorAll(".skill")].filter((node) =>
+          getComputedStyle(node).textDecorationLine.includes("underline"),
+        ).length,
+      };
+    });
+    expect(seen.line).not.toBe(seen.page);
+    expect(seen.dot).not.toBe(seen.page);
+    expect(seen.hub).toBe("1px");
+    expect(seen.glyphDot).not.toBe(seen.page);
+    expect(seen.navLine).not.toBe(seen.page);
+    expect(seen.projectDot).not.toBe(seen.page);
+    expect(seen.availabilityDot).not.toBe(seen.page);
+    // "None" is chosen to begin with, so it alone must look different from the other pills.
+    expect(seen.pills[0]).not.toBe(seen.pills[1]);
+    expect(new Set(seen.pills.slice(1)).size).toBe(1);
+    expect(seen.underlined).toBe(0);
   });
 });

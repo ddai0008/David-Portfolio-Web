@@ -1,16 +1,26 @@
 import { person } from "@/content/site";
+import { Aurora } from "./Aurora";
 import { CopyEmail } from "./CopyEmail";
 
 export function Contact() {
   return (
-    <section id="contact" className="py-28 md:py-44">
+    <section id="contact" className="relative isolate overflow-hidden py-24 md:py-36">
+      <Aurora
+        fade="top"
+        blobs={[
+          { hue: "nutritrack", x: "20%", y: "78%", size: "48%", dur: 33 },
+          { hue: "mymichlin", x: "46%", y: "92%", size: "46%", dur: 29, delay: -11 },
+          { hue: "probudget", x: "74%", y: "70%", size: "50%", dur: 35, delay: -20 },
+          { hue: "agencia", x: "92%", y: "88%", size: "44%", dur: 30, delay: -6 },
+        ]}
+      />
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Contact · Available from December 2026</p>
           <h2 className="display mt-5">Let’s talk.</h2>
           <p className="lede mt-6 max-w-xl">
-            Looking for a graduate program in software engineering, solution delivery or business
-            analysis.
+            Looking for a graduate software engineering role. Solution delivery and business
+            analysis fit too.
           </p>
 
           <a

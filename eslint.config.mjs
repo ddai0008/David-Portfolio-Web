@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Local-only notes and the old site; never part of the app.
     ".context/**",
+    // The Impeccable skills are installed per machine and are not this project's code.
+    ".claude/skills/impeccable/**",
   ]),
   {
     // three.js objects (meshes, materials) are mutated imperatively inside useFrame, on every

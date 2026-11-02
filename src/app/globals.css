@@ -30,6 +30,10 @@
   --signal: #1fa89a;
 
   --glow-strength: 32%;
+  /* How strongly the project hues tint the page behind the hero, the capstone and the contact.
+     Kept under 8% on paper (David's limit); a hue over black reads weaker, so dark is a touch higher. */
+  --aurora-strength: 8%;
+  --wash-strength: 6%;
 }
 
 /* Follows the system unless a theme is chosen explicitly via data-theme. */
@@ -47,6 +51,8 @@
     --device: #2c2c2e;
     --device-edge: #636366;
     --glow-strength: 40%;
+    --aurora-strength: 13%;
+    --wash-strength: 9%;
   }
 }
 
@@ -63,6 +69,8 @@
   --device: #2c2c2e;
   --device-edge: #636366;
   --glow-strength: 40%;
+  --aurora-strength: 13%;
+  --wash-strength: 9%;
 }
 
 @theme inline {
@@ -102,6 +110,12 @@
     color: var(--link);
   }
 
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+
   ::selection {
     background: color-mix(in srgb, var(--accent) 25%, transparent);
   }
@@ -120,7 +134,9 @@
 /* ---------- Type scale. One idea per screen, said big. ---------- */
 
 @utility display {
-  font-size: clamp(3.5rem, 11vw, 8rem);
+  /* Scales with the screen's height as well as its width, so on a short laptop the name does not
+     push the facts under the hero off the first screen. */
+  font-size: clamp(3.5rem, min(11vw, 15.5svh), 8rem);
   line-height: 0.95;
   font-weight: 700;
   letter-spacing: -0.034em;
@@ -302,6 +318,193 @@
   isolation: isolate;
 }
 
+/* ---------- Colour from the work ---------- */
+
+/* Soft pools of the four project colours behind the top and the end of the page. Decorative. Each
+   blob is a radial gradient, so there is nothing to blur and nothing heavier than a transform to
+   animate. The section that holds it must be `isolate` so z-index -1 stays above its background. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+.aurora-fade-top {
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+  mask-image: linear-gradient(to top, #000 55%, transparent);
+}
+
+.aurora > span {
+  --d: max(var(--size), 22rem);
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--d);
+  aspect-ratio: 1;
+  margin: calc(var(--d) * -0.5) 0 0 calc(var(--d) * -0.5);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--hue) var(--aurora-strength), transparent),
+    transparent
+  );
+}
+
+/* A single project's colour washed across the top of its section. */
+.wash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 80% 40% at 88% 0%,
+      color-mix(in srgb, var(--hue) var(--wash-strength), transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 55% 30% at 6% 14%,
+      color-mix(in srgb, var(--hue-2, var(--hue)) calc(var(--wash-strength) * 0.8), transparent),
+      transparent 70%
+    );
+}
+
+/* ---------- Diagrams that draw themselves. Their finished state is the default; the motion
+   block below only animates towards it. ---------- */
+
+.team {
+  view-timeline: --team block;
+}
+
+.team-line {
+  background: var(--ink-muted);
+}
+
+.flow-step {
+  view-timeline: --step block;
+}
+
+.g-dot {
+  fill: var(--ink-muted);
+}
+
+.g-hot {
+  fill: var(--signal);
+}
+
+.g-line {
+  stroke: var(--ink-muted);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+
+.g-ring {
+  fill: color-mix(in srgb, var(--signal) 12%, transparent);
+  stroke: var(--signal);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ---------- Skills: dots show where a skill was used, and a chosen project underlines its skills ---------- */
+
+/* The underline exists only while a project is chosen. A transparent one would not stay
+   invisible: forced colours repaints every underline in the text colour. */
+.skill {
+  color: var(--mark-text, var(--ink-muted));
+  text-decoration-line: var(--mark-line, none);
+  text-decoration-color: var(--mark, currentColor);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.32em;
+  transition: color 200ms ease;
+}
+
+.skill-dots {
+  display: inline-flex;
+  gap: 0.2em;
+  margin-left: 0.45em;
+  vertical-align: 0.14em;
+}
+
+.skill-dot {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+/* No project colour: a ring, so the internship reads as a place without borrowing a hue. */
+.skill-dot[data-plain] {
+  box-sizing: border-box;
+  background: transparent;
+  border: 1.5px solid var(--ink-muted);
+}
+
+.skill-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.skill-pill:hover {
+  border-color: var(--ink-muted);
+}
+
+.skill-pill:has(input:checked) {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.skill-pill:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skills-explorer:has(#skill-probudget:checked) .skill[data-p~="probudget"] {
+  --mark: var(--hue-probudget);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-mymichlin:checked) .skill[data-p~="mymichlin"] {
+  --mark: var(--hue-mymichlin);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-nutritrack:checked) .skill[data-p~="nutritrack"] {
+  --mark: var(--hue-nutritrack);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-agencia:checked) .skill[data-p~="agencia"] {
+  --mark: var(--hue-agencia);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+.skills-explorer:has(#skill-stvincent:checked) .skill[data-p~="stvincent"] {
+  --mark: var(--ink);
+  --mark-text: var(--ink);
+  --mark-line: underline;
+}
+
 /* ---------- CSS device frames ---------- */
 
 .display-frame {
@@ -455,6 +658,18 @@
     }
   }
 
+  /* A smaller, shorter entrance for small items, so the page does not announce everything alike. */
+  @keyframes rise-soft {
+    from {
+      opacity: 0;
+      transform: translateY(0.875rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   @keyframes word-up {
     from {
       transform: translateY(110%);
@@ -489,6 +704,55 @@
     }
   }
 
+  @keyframes aurora-drift {
+    from {
+      transform: translate3d(-4%, 3%, 0) scale(0.94);
+    }
+    to {
+      transform: translate3d(5%, -4%, 0) scale(1.1);
+    }
+  }
+
+  @keyframes draw-y {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  @keyframes draw-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes g-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes g-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+  }
+
+  @keyframes g-merge {
+    from {
+      transform: none;
+    }
+  }
+
+  @keyframes progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
   @keyframes sheet-up {
     from {
       opacity: 0;
@@ -516,8 +780,9 @@
     animation-delay: calc(var(--i, 0) * 90ms + 80ms);
   }
 
+  /* Three beats and it rests. The availability dot draws the eye once; it does not keep pulsing. */
   .signal-dot {
-    animation: pulse-ring 2.4s ease-out infinite;
+    animation: pulse-ring 2.4s ease-out 3;
   }
 
   .sheet[open] {
@@ -532,6 +797,12 @@
       animation-range: entry 4% entry 42%;
     }
 
+    .reveal-soft {
+      animation: rise-soft linear both;
+      animation-timeline: view();
+      animation-range: entry 4% entry 36%;
+    }
+
     .drift {
       animation: drift linear both;
       animation-timeline: view();
@@ -542,6 +813,82 @@
       animation: nav-line linear both;
       animation-timeline: scroll();
       animation-range: 0 5rem;
+    }
+  }
+
+  .aurora > span {
+    animation: aurora-drift var(--dur, 30s) ease-in-out var(--delay, 0s) infinite alternate;
+    will-change: transform;
+  }
+
+  /* The footer button sets this. The drift loops for as long as the page is open, so a reader
+     must be able to stop it (WCAG 2.2.2), and the OS setting alone is not the only way. */
+  :root[data-motion="paused"] .aurora > span {
+    animation-play-state: paused;
+  }
+
+  /* AmbientGate marks a pool group that is out of view. Nobody can see it drift, and it would
+     still cost the main thread a frame at a time. */
+  .aurora[data-offscreen] > span {
+    animation-play-state: paused;
+  }
+
+  @supports (animation-timeline: view()) {
+    /* The capstone chart draws top to bottom as it scrolls into view. Every line follows the
+       chart's own timeline, so they run in order rather than each in its own few pixels. */
+    .team-y {
+      transform-origin: top;
+      animation: draw-y linear both;
+      animation-timeline: --team;
+      animation-range: entry var(--from) entry var(--to);
+    }
+
+    .team-x {
+      transform-origin: center;
+      animation: draw-x linear both;
+      animation-timeline: --team;
+      animation-range: entry var(--from) entry var(--to);
+    }
+
+    /* The matching schematic: each glyph follows its own step. */
+    .g-line {
+      animation: g-draw linear both;
+      animation-timeline: --step;
+      animation-range: entry 20% entry 75%;
+    }
+
+    .g-ring {
+      animation: g-pop linear both;
+      animation-timeline: --step;
+      animation-range: entry 30% entry 80%;
+    }
+
+    .g-merge {
+      animation: g-merge linear both;
+      animation-timeline: --step;
+      animation-range: entry 25% entry 80%;
+    }
+  }
+
+  /* A thin progress line in the four project colours, as the page scrolls. */
+  @supports (animation-timeline: scroll()) {
+    .nav::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      z-index: 1;
+      height: 2px;
+      background: linear-gradient(
+        90deg,
+        var(--hue-agencia),
+        var(--hue-probudget),
+        var(--hue-mymichlin),
+        var(--hue-nutritrack)
+      );
+      transform: scaleX(0);
+      transform-origin: 0 50%;
+      animation: progress linear both;
+      animation-timeline: scroll(root);
     }
   }
 
@@ -559,6 +906,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .motion-control {
+    display: none;
+  }
   html {
     scroll-behavior: auto;
   }
@@ -581,6 +931,81 @@
 @supports not (animation-timeline: scroll()) {
   .nav::after {
     opacity: 1;
+  }
+}
+
+/* ---------- High-contrast mode (Windows "contrast themes", forced colours) ----------
+   The browser replaces every background, border and text colour with the user's own. Fills drawn
+   with background-color vanish, so the capstone chart's lines, dots and pill would disappear.
+   Structure takes the system text colour; the project-colour dots are identity, so they opt out. */
+
+@media (forced-colors: active) {
+  .keep-colour,
+  .skill-dot:not([data-plain]) {
+    forced-color-adjust: none;
+  }
+
+  .team-line,
+  .team-dot {
+    background: CanvasText;
+  }
+
+  .skill-dot[data-plain] {
+    border-color: CanvasText;
+  }
+
+  /* The chosen project is shown by colour alone, and forced colours repaint both the text and the
+     border, so every pill would look alike. The system's own selected colours survive. */
+  .skill-pill:has(input:checked) {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+
+  /* On that fill the dots need their own contrast: the ring takes the text colour of the fill, and
+     the project colours get a halo so they do not sink into it. */
+  .skill-pill:has(input:checked) .skill-dot[data-plain] {
+    border-color: HighlightText;
+  }
+
+  .skill-pill:has(input:checked) .skill-dot:not([data-plain]) {
+    box-shadow: 0 0 0 1.5px HighlightText;
+  }
+
+  .team-hub {
+    border: 1px solid CanvasText;
+  }
+
+  .g-dot {
+    fill: CanvasText;
+  }
+
+  .g-line {
+    stroke: CanvasText;
+  }
+
+  .g-hot {
+    fill: Highlight;
+  }
+
+  .g-ring {
+    fill: none;
+    stroke: Highlight;
+  }
+
+  .aurora,
+  .wash {
+    display: none;
+  }
+
+  .nav::before {
+    background: Highlight;
+  }
+
+  /* The hairline under the bar is a background fill too, so it took the page colour. */
+  .nav::after {
+    background: CanvasText;
   }
 }
 

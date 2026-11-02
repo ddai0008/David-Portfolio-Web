@@ -1,4 +1,5 @@
 import { person } from "@/content/site";
+import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -26,6 +27,7 @@ export function Nav() {
             Résumé
           </a>
           <ThemeToggle />
+          <MobileMenu />
         </div>
       </div>
     </header>

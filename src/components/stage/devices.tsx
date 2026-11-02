@@ -5,7 +5,9 @@ import type { RefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { palette } from "./palette";
+import { androidSpec, BODY_FILLET, frontLayers, iphoneSpec } from "./phones";
 
 // The devices are built in code: rounded bodies, a bezel, a glossy glass layer and a screen
 // plane. No models are downloaded, so there is nothing to license and almost nothing to ship.
@@ -61,7 +63,7 @@ function useDispose(resource: { dispose(): void }) {
   useEffect(() => () => resource.dispose(), [resource]);
 }
 
-function roundedRect(width: number, height: number, radius: number) {
+function roundedRectShape(width: number, height: number, radius: number) {
   const x = -width / 2;
   const y = -height / 2;
   const shape = new THREE.Shape();
@@ -74,8 +76,11 @@ function roundedRect(width: number, height: number, radius: number) {
   shape.absarc(x + radius, y + height - radius, radius, Math.PI / 2, Math.PI, false);
   shape.lineTo(x, y + radius);
   shape.absarc(x + radius, y + radius, radius, Math.PI, Math.PI * 1.5, false);
+  return shape;
+}
 
-  const geometry = new THREE.ShapeGeometry(shape, 8);
+function roundedRect(width: number, height: number, radius: number) {
+  const geometry = new THREE.ShapeGeometry(roundedRectShape(width, height, radius), 24);
   // ShapeGeometry maps UVs to raw positions; stretch them over 0..1 so a texture fills the shape.
   const position = geometry.attributes.position;
   const uv = geometry.attributes.uv;
@@ -84,6 +89,46 @@ function roundedRect(width: number, height: number, radius: number) {
   }
   uv.needsUpdate = true;
   return geometry;
+}
+
+// A phone body: a slab whose corners are as round as the outline asks, with a small fillet round
+// the edges. (A rounded box cannot do this: its radius is capped at half its thickness, which
+// leaves a thin phone with almost square corners.)
+const FILLET = BODY_FILLET;
+
+function slab(width: number, height: number, depth: number, radius: number) {
+  // The extrusion grows by the fillet on every side, so start that much smaller.
+  const flat = depth - 2 * FILLET;
+  const extruded = new THREE.ExtrudeGeometry(
+    roundedRectShape(width - 2 * FILLET, height - 2 * FILLET, radius - FILLET),
+    {
+      depth: flat,
+      bevelEnabled: true,
+      bevelThickness: FILLET,
+      bevelSize: FILLET,
+      bevelSegments: 6,
+      curveSegments: 32,
+    },
+  );
+  extruded.translate(0, 0, -flat / 2);
+  // Share the vertices so the metal shades smoothly round the corners instead of in facets.
+  extruded.deleteAttribute("normal");
+  extruded.deleteAttribute("uv");
+  const smooth = mergeVertices(extruded, 1e-5);
+  smooth.computeVertexNormals();
+  extruded.dispose();
+
+  // Averaging would tilt the normals along the edge of each flat face and shade the face with a
+  // gradient. The front and back are flat, so point those vertices straight out; the fillet then
+  // blends smoothly from there.
+  const position = smooth.attributes.position;
+  const normal = smooth.attributes.normal;
+  for (let i = 0; i < position.count; i++) {
+    const z = position.getZ(i);
+    if (Math.abs(Math.abs(z) - depth / 2) < 1e-4) normal.setXYZ(i, 0, 0, Math.sign(z));
+  }
+  normal.needsUpdate = true;
+  return smooth;
 }
 
 // Loads screen images as textures. They arrive one by one, so a device shows a dark screen for
@@ -210,22 +255,32 @@ export function Phone({
   const group = usePose(props, kind === "iphone" ? -0.3 : 0.28);
 
   const iphone = kind === "iphone";
-  const screenHeight = iphone ? 1.56 : 1.617;
+  const spec = iphone ? iphoneSpec : androidSpec;
   const body = useMemo(
-    () => new RoundedBoxGeometry(0.8, 1.7, 0.09, 4, iphone ? 0.13 : 0.11),
-    [iphone],
+    () => slab(spec.body.width, spec.body.height, spec.body.depth, spec.body.radius),
+    [spec],
   );
   const bezel = useMemo(
-    () => roundedRect(0.76, screenHeight + 0.05, iphone ? 0.11 : 0.09),
-    [iphone, screenHeight],
+    () => roundedRect(spec.bezel.width, spec.bezel.height, spec.bezel.radius),
+    [spec],
   );
   const display = useMemo(
-    () => roundedRect(0.72, screenHeight, iphone ? 0.095 : 0.08),
-    [iphone, screenHeight],
+    () => roundedRect(spec.display.width, spec.display.height, spec.display.radius),
+    [spec],
+  );
+  const island = useMemo(
+    () => roundedRect(iphoneSpec.island.width, iphoneSpec.island.height, iphoneSpec.island.height / 2),
+    [],
   );
   useDispose(body);
   useDispose(bezel);
   useDispose(display);
+  useDispose(island);
+
+  // Everything on the front sits a hair above the body, in a fixed order.
+  const front = spec.body.depth / 2;
+  const layer = frontLayers(screens.length);
+  const halfWidth = spec.body.width / 2;
 
   // Each screen sits on the previous one and fades in as the scroll reaches it, so the content
   // appears to change as you scroll through the scene rather than cutting.
@@ -249,25 +304,30 @@ export function Phone({
       </mesh>
       {iphone && (
         <>
-          <mesh position={[0.4, 0.3, 0]}>
+          <mesh position={[halfWidth, 0.3, 0]}>
             <boxGeometry args={[0.014, 0.26, 0.03]} />
             <meshStandardMaterial color={palette.titanium} metalness={0.9} roughness={0.3} />
           </mesh>
-          <mesh position={[-0.4, 0.42, 0]}>
+          <mesh position={[-halfWidth, 0.42, 0]}>
             <boxGeometry args={[0.014, 0.12, 0.03]} />
             <meshStandardMaterial color={palette.titanium} metalness={0.9} roughness={0.3} />
           </mesh>
-          <mesh position={[-0.4, 0.22, 0]}>
+          <mesh position={[-halfWidth, 0.22, 0]}>
             <boxGeometry args={[0.014, 0.2, 0.03]} />
             <meshStandardMaterial color={palette.titanium} metalness={0.9} roughness={0.3} />
           </mesh>
         </>
       )}
-      <mesh geometry={bezel} position={[0, 0, 0.0452]}>
+      <mesh geometry={bezel} position={[0, 0, front + layer.bezel]}>
         <meshBasicMaterial color={palette.black} />
       </mesh>
       {screens.map((texture, k) => (
-        <mesh key={k} geometry={display} position={[0, 0, 0.0458 + k * 0.0003]} renderOrder={k + 1}>
+        <mesh
+          key={k}
+          geometry={display}
+          position={[0, 0, front + layer.screen(k)]}
+          renderOrder={k + 1}
+        >
           <meshBasicMaterial
             key={texture ? "ready" : "loading"}
             ref={(material) => {
@@ -283,12 +343,19 @@ export function Phone({
         </mesh>
       ))}
       {iphone && (
-        <mesh position={[0, screenHeight / 2 - 0.095, 0.0468]} rotation-z={Math.PI / 2} renderOrder={15}>
-          <capsuleGeometry args={[0.027, 0.13, 4, 14]} />
+        <mesh
+          geometry={island}
+          position={[
+            0,
+            spec.display.height / 2 - iphoneSpec.island.top - iphoneSpec.island.height / 2,
+            front + layer.island,
+          ]}
+          renderOrder={15}
+        >
           <meshBasicMaterial color={palette.black} />
         </mesh>
       )}
-      <Glass geometry={display} z={0.0472} />
+      <Glass geometry={display} z={front + layer.glass} />
     </group>
   );
 }
