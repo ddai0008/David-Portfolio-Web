@@ -1,4 +1,6 @@
 import { impact, matchingFlow } from "@/content/site";
+import { CountUp } from "./CountUp";
+import { MatchGlyph } from "./MatchGlyph";
 
 export function Impact() {
   return (
@@ -23,6 +25,8 @@ export function Impact() {
                     <span aria-hidden="true">{stat.figure}</span>
                     <span className="sr-only">{stat.spoken}</span>
                   </>
+                ) : "count" in stat ? (
+                  <CountUp to={stat.count.to} prefix={stat.count.prefix} />
                 ) : (
                   stat.figure
                 )}
@@ -39,8 +43,12 @@ export function Impact() {
           className="mt-16 grid grid-cols-2 gap-x-6 gap-y-9 md:mt-24 md:grid-cols-4 md:gap-x-8"
         >
           {matchingFlow.map((step, index) => (
-            <li key={step.label} className="reveal border-t-2 border-ink pt-5">
-              <span className="text-sm font-medium text-ink-muted tabular-nums" aria-hidden="true">
+            <li key={step.label} className="flow-step reveal border-t-2 border-ink pt-5">
+              <MatchGlyph step={index as 0 | 1 | 2 | 3} />
+              <span
+                className="mt-4 block text-sm font-medium text-ink-muted tabular-nums"
+                aria-hidden="true"
+              >
                 0{index + 1}
               </span>
               <h3 className="title mt-2">{step.label}</h3>

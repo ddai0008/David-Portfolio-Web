@@ -46,6 +46,7 @@ export const glance = [
 export const impact = [
   {
     figure: "~30,000",
+    count: { to: 30000, prefix: "~" },
     caption: "donor records de-duplicated with a reusable Power Query fuzzy-matching pipeline",
   },
   {
