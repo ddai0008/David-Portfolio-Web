@@ -46,6 +46,24 @@ test.describe("accessibility", () => {
     });
   }
 
+  for (const { name, colorScheme, dataTheme } of themes) {
+    test(`has no violations on the 404 page (${name})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.goto("/no-such-page");
+      if (dataTheme) {
+        await page.evaluate((theme) => {
+          document.documentElement.dataset.theme = theme;
+        }, dataTheme);
+      }
+
+      const { violations } = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(violations).toEqual([]);
+    });
+  }
+
   test("has no violations with a detail sheet open", async ({ page }) => {
     await page.goto("/");
     await page.locator("#probudget").getByRole("button", { name: "Details" }).click();
