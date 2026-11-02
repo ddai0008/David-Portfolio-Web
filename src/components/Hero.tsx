@@ -1,4 +1,4 @@
-import { person, selectedWork } from "@/content/site";
+import { person, proBudgetDemo, selectedWork } from "@/content/site";
 import { Aurora } from "./Aurora";
 import { vars } from "./css";
 import { LaptopFrame } from "./Devices";
@@ -132,7 +132,7 @@ export function Hero() {
           </div>
           <p className="mt-6 text-center text-[0.9375rem] md:text-right">
             <a
-              href="https://pro-budget.vercel.app"
+              href={proBudgetDemo}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium underline-offset-4"

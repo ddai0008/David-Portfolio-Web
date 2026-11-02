@@ -1,6 +1,9 @@
 // Facts on the page come from the résumé PDF. Never add the phone number, city, retail roles or
 // student ID here (see CLAUDE.md).
 
+// The live ProBudget demo, used by the hero caption and the project section.
+export const proBudgetDemo = "https://pro-budget.vercel.app";
+
 export const person = {
   name: "David Dai",
   email: "daviddaicareer@gmail.com",
@@ -47,7 +50,7 @@ export const impact = [
   {
     figure: "~30,000",
     count: { to: 30000, prefix: "~" },
-    caption: "donor records de-duplicated with a reusable Power Query pipeline that finds near-identical records",
+    caption: "donor records de-duplicated with a reusable Power Query fuzzy-matching pipeline",
   },
   {
     figure: "100/100",
@@ -67,7 +70,7 @@ export const impact = [
 // How the de-duplication ran, using only what the résumé says about it.
 export const matchingFlow = [
   { label: "Collect", text: "About 30,000 donor records" },
-  { label: "Match", text: "A reusable Power Query pipeline that finds near-identical records" },
+  { label: "Match", text: "A reusable Power Query fuzzy-matching pipeline for near-duplicates" },
   { label: "Flag", text: "Likely duplicates flagged automatically" },
   { label: "Review", text: "Human review for the final merge decision" },
 ] as const;

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { proBudgetDemo } from "@/content/site";
 import type { Hue } from "@/content/site";
 import { vars } from "./css";
 import { DetailsSheet, SheetSection } from "./DetailsSheet";
@@ -117,7 +118,7 @@ export function Work() {
       actions: (
         <>
           <a
-            href="https://pro-budget.vercel.app"
+            href={proBudgetDemo}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"
@@ -149,7 +150,7 @@ export function Work() {
             <SheetSection title="Try it">
               <Fact>
                 The demo account is printed on the sign-in page at{" "}
-                <a href="https://pro-budget.vercel.app" target="_blank" rel="noopener noreferrer">
+                <a href={proBudgetDemo} target="_blank" rel="noopener noreferrer">
                   pro-budget.vercel.app
                 </a>
                 . The source repository is private.
