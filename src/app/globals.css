@@ -980,7 +980,9 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    /* None at all, not a near-zero duration: with every property of every element transitioning
+       over 0.01ms, WebKit left inherited text colours stale after the theme changed. */
+    transition-property: none !important;
     scroll-behavior: auto !important;
   }
 }

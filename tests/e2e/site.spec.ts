@@ -128,14 +128,20 @@ test("offers the résumé download and the contact links", async ({ page }) => {
   );
 });
 
-test("copies the email address", async ({ page, context }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+test("copies the email address", async ({ page, context, browserName }) => {
+  // Only Chromium lets a test grant the clipboard; the other engines are checked for the button's
+  // own feedback.
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
   await page.goto("/");
   await page.getByRole("button", { name: "Copy email" }).click();
   await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    "daviddaicareer@gmail.com",
-  );
+  if (browserName === "chromium") {
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      "daviddaicareer@gmail.com",
+    );
+  }
 });
 
 test("says so when the browser refuses to copy", async ({ page }) => {
@@ -511,7 +517,9 @@ test.describe("diagrams and colour", () => {
       // Below the fold it waits at zero, while the spoken number is always the finished one.
       await expect(figure.locator("[aria-hidden='true']")).toHaveText("~0");
       await expect(figure.locator(".sr-only")).toHaveText("~30,000");
-      await page.locator("#impact dl").scrollIntoViewIfNeeded();
+      // To the middle of the screen: the count starts once most of the figure is in view, and
+      // scrollIntoViewIfNeeded can stop with it half under the nav bar in WebKit.
+      await figure.evaluate((node) => node.scrollIntoView({ block: "center", behavior: "instant" }));
       await expect(figure.locator("[aria-hidden='true']")).toHaveText("~30,000");
     });
 
@@ -533,6 +541,9 @@ test.describe("diagrams and colour", () => {
 
     test("draws a progress line in the project colours as the page scrolls", async ({ page }) => {
       await page.goto("/");
+      // The line is driven by scroll(), which Firefox does not have yet; there the bar just has no line.
+      const supported = await page.evaluate(() => CSS.supports("animation-timeline: scroll()"));
+      test.skip(!supported, "this browser has no scroll-driven animation");
       const drawn = () =>
         page.evaluate(
           () =>
@@ -579,6 +590,9 @@ test.describe("recruiter path", () => {
 
   test("sets body copy so it does not end on a lone word", async ({ page }) => {
     await page.goto("/");
+    // Firefox has no text-wrap: pretty yet, so it keeps its own line breaks.
+    const supported = await page.evaluate(() => CSS.supports("text-wrap: pretty"));
+    test.skip(!supported, "this browser has no text-wrap: pretty");
     const wrap = await page
       .locator("#about p")
       .first()
@@ -712,8 +726,9 @@ test.describe("tap areas", () => {
           };
         });
         expect(area.own, `${area.name} keeps its own taps`).toBe(true);
-        expect(area.height, `${area.name} is hit over ${area.height}px tall`).toBeGreaterThanOrEqual(44);
-        expect(area.width, `${area.name} is hit over ${area.width}px wide`).toBeGreaterThanOrEqual(44);
+        // 44px, give or take the half pixel that sub-pixel layout moves between engines.
+        expect(area.height, `${area.name} is hit over ${area.height}px tall`).toBeGreaterThanOrEqual(43.5);
+        expect(area.width, `${area.name} is hit over ${area.width}px wide`).toBeGreaterThanOrEqual(43.5);
       }
     });
   }

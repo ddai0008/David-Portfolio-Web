@@ -4,6 +4,10 @@
 // The live ProBudget demo, used by the hero caption and the project section.
 export const proBudgetDemo = "https://pro-budget.vercel.app";
 
+// Where this site is served, for the absolute links in the share card's tags. Change it here when
+// the site moves to a custom domain.
+export const siteUrl = "https://david-portfolio-web.vercel.app";
+
 export const person = {
   name: "David Dai",
   email: "daviddaicareer@gmail.com",

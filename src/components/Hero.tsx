@@ -3,6 +3,7 @@ import { Aurora } from "./Aurora";
 import { vars } from "./css";
 import { LaptopFrame } from "./Devices";
 import { Shot } from "./Shot";
+import { ProfileLink } from "./ProfileLink";
 import { Tilt } from "./Tilt";
 
 export function Hero() {
@@ -64,25 +65,11 @@ export function Hero() {
 
           {/* Recruiters check a profile before anything else, so it is not left to the last section. */}
           <p
-            className="hero-in mt-5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[0.9375rem] font-medium"
+            className="hero-in mt-5 flex items-center gap-x-6"
             style={vars({ "--i": 6 })}
           >
-            <a
-              href={person.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hit underline-offset-4"
-            >
-              LinkedIn<span className="sr-only"> (opens in a new tab)</span>
-            </a>
-            <a
-              href={person.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hit underline-offset-4"
-            >
-              GitHub<span className="sr-only"> (opens in a new tab)</span>
-            </a>
+            <ProfileLink kind="linkedin" className="hit transition-opacity hover:opacity-70" />
+            <ProfileLink kind="github" className="hit transition-opacity hover:opacity-70" />
           </p>
 
           <nav
