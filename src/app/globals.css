@@ -957,6 +957,16 @@
     border-color: Highlight;
   }
 
+  /* On that fill the dots need their own contrast: the ring takes the text colour of the fill, and
+     the project colours get a halo so they do not sink into it. */
+  .skill-pill:has(input:checked) .skill-dot[data-plain] {
+    border-color: HighlightText;
+  }
+
+  .skill-pill:has(input:checked) .skill-dot:not([data-plain]) {
+    box-shadow: 0 0 0 1.5px HighlightText;
+  }
+
   .team-hub {
     border: 1px solid CanvasText;
   }

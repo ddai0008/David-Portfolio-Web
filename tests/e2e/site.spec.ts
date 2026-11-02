@@ -543,7 +543,10 @@ test.describe("recruiter path", () => {
 
 test.describe("skills and their evidence", () => {
   test("every skill with evidence is a listed skill, in a known place", () => {
-    const listed = new Set(skills.flatMap((group) => group.items as readonly string[]));
+    const all = skills.flatMap((group) => group.items as readonly string[]);
+    // Each skill is listed once, so the highlighter's counts follow the evidence and nothing else.
+    expect(new Set(all).size).toBe(all.length);
+    const listed = new Set(all);
     const places = new Set<string>(evidence.map((place) => place.id));
     for (const [name, where] of Object.entries(skillEvidence)) {
       expect(listed.has(name), `${name} is not a listed skill`).toBe(true);
