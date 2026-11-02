@@ -1,4 +1,5 @@
 import { person, selectedWork } from "@/content/site";
+import { Aurora } from "./Aurora";
 import { vars } from "./css";
 import { LaptopFrame } from "./Devices";
 import { Shot } from "./Shot";
@@ -9,8 +10,17 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="relative flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-24 pb-16"
+      className="relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-24 pb-16"
     >
+      <Aurora
+        fade="bottom"
+        blobs={[
+          { hue: "agencia", x: "74%", y: "20%", size: "56%", dur: 34 },
+          { hue: "probudget", x: "58%", y: "52%", size: "50%", dur: 28, delay: -9 },
+          { hue: "mymichlin", x: "92%", y: "68%", size: "44%", dur: 31, delay: -17 },
+          { hue: "nutritrack", x: "34%", y: "92%", size: "42%", dur: 37, delay: -5 },
+        ]}
+      />
       <div className="wrap grid items-center gap-x-8 gap-y-20 md:grid-cols-12">
         <div className="md:col-span-7">
           <p className="hero-in eyebrow flex items-center gap-2.5" style={vars({ "--i": 0 })}>

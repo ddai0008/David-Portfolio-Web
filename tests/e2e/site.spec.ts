@@ -383,3 +383,88 @@ test.describe("navigation", () => {
     await expect(page).toHaveURL(/#main$/);
   });
 });
+
+test.describe("diagrams and colour", () => {
+  test("shows the capstone team as a chart around David, with decorative lines", async ({ page }) => {
+    await page.goto("/");
+    const leadership = page.locator("#leadership");
+    await expect(leadership).toContainText("Agencia Change");
+    await expect(leadership).toContainText("Team Lead and client liaison");
+    // The list is what assistive technology reads; the lines joining it up are only decoration.
+    await expect(page.getByRole("list", { name: "Team make-up" }).getByRole("listitem")).toHaveCount(3);
+    const lines = leadership.locator(".team-line");
+    expect(await lines.count()).toBe(6);
+    for (const line of await lines.all()) await expect(line).toHaveAttribute("aria-hidden", "true");
+  });
+
+  test("shows every diagram finished when motion is off", async ({ page }) => {
+    await page.goto("/");
+    const transforms = await page
+      .locator(".team-line")
+      .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).transform));
+    expect(new Set(transforms)).toEqual(new Set(["none"]));
+
+    // The merge step already shows its pairs merged, and the progress line is not drawn at all.
+    const merged = await page
+      .locator("#impact .g-merge")
+      .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).transform));
+    expect(merged).toHaveLength(8);
+    for (const transform of merged) expect(transform).not.toBe("none");
+    const progress = await page.evaluate(
+      () => getComputedStyle(document.querySelector(".nav")!, "::before").content,
+    );
+    expect(progress).toMatch(/^(none|normal)$/);
+  });
+
+  test("keeps the colour washes within the agreed strength", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/");
+    const strengths = await page.evaluate(() => {
+      const style = getComputedStyle(document.documentElement);
+      return ["--aurora-strength", "--wash-strength"].map((name) =>
+        parseFloat(style.getPropertyValue(name)),
+      );
+    });
+    for (const strength of strengths) expect(strength).toBeLessThanOrEqual(8);
+    // Decorative, so none of it is announced.
+    for (const wash of await page.locator(".aurora, .wash").all()) {
+      await expect(wash).toHaveAttribute("aria-hidden", "true");
+    }
+  });
+
+  test.describe("with motion", () => {
+    test.use({ reducedMotion: "no-preference" });
+
+    // These are about the count-up and the progress line, not the 3D stage. Data saver keeps the
+    // stage off, so its software-rendered WebGL cannot starve the animation frames under load.
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, "connection", { value: { saveData: true } });
+      });
+    });
+
+    test("counts the donor records up as they scroll into view", async ({ page }) => {
+      await page.goto("/");
+      const figure = page.locator("#impact dt").first();
+      // Below the fold it waits at zero, while the spoken number is always the finished one.
+      await expect(figure.locator("[aria-hidden='true']")).toHaveText("~0");
+      await expect(figure.locator(".sr-only")).toHaveText("~30,000");
+      await page.locator("#impact dl").scrollIntoViewIfNeeded();
+      await expect(figure.locator("[aria-hidden='true']")).toHaveText("~30,000");
+    });
+
+    test("draws a progress line in the project colours as the page scrolls", async ({ page }) => {
+      await page.goto("/");
+      const drawn = () =>
+        page.evaluate(
+          () =>
+            new DOMMatrix(getComputedStyle(document.querySelector(".nav")!, "::before").transform).a,
+        );
+      await expect.poll(drawn).toBeLessThan(0.05);
+      await page.evaluate(() =>
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+      );
+      await expect.poll(drawn).toBeGreaterThan(0.95);
+    });
+  });
+});

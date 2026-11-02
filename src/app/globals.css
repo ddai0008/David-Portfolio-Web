@@ -30,6 +30,10 @@
   --signal: #1fa89a;
 
   --glow-strength: 32%;
+  /* How strongly the project hues tint the page behind the hero, the capstone and the contact.
+     Kept under 8% on paper (David's limit); a hue over black reads weaker, so dark is a touch higher. */
+  --aurora-strength: 8%;
+  --wash-strength: 6%;
 }
 
 /* Follows the system unless a theme is chosen explicitly via data-theme. */
@@ -47,6 +51,8 @@
     --device: #2c2c2e;
     --device-edge: #636366;
     --glow-strength: 40%;
+    --aurora-strength: 13%;
+    --wash-strength: 9%;
   }
 }
 
@@ -63,6 +69,8 @@
   --device: #2c2c2e;
   --device-edge: #636366;
   --glow-strength: 40%;
+  --aurora-strength: 13%;
+  --wash-strength: 9%;
 }
 
 @theme inline {
@@ -302,6 +310,102 @@
   isolation: isolate;
 }
 
+/* ---------- Colour from the work ---------- */
+
+/* Soft pools of the four project colours behind the top and the end of the page. Decorative. Each
+   blob is a radial gradient, so there is nothing to blur and nothing heavier than a transform to
+   animate. The section that holds it must be `isolate` so z-index -1 stays above its background. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+.aurora-fade-top {
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+  mask-image: linear-gradient(to top, #000 55%, transparent);
+}
+
+.aurora > span {
+  --d: max(var(--size), 22rem);
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--d);
+  aspect-ratio: 1;
+  margin: calc(var(--d) * -0.5) 0 0 calc(var(--d) * -0.5);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--hue) var(--aurora-strength), transparent),
+    transparent
+  );
+}
+
+/* A single project's colour washed across the top of its section. */
+.wash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 80% 40% at 88% 0%,
+      color-mix(in srgb, var(--hue) var(--wash-strength), transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 55% 30% at 6% 14%,
+      color-mix(in srgb, var(--hue-2, var(--hue)) calc(var(--wash-strength) * 0.8), transparent),
+      transparent 70%
+    );
+}
+
+/* ---------- Diagrams that draw themselves. Their finished state is the default; the motion
+   block below only animates towards it. ---------- */
+
+.team {
+  view-timeline: --team block;
+}
+
+.team-line {
+  background: var(--ink-muted);
+}
+
+.flow-step {
+  view-timeline: --step block;
+}
+
+.g-dot {
+  fill: var(--ink-muted);
+}
+
+.g-hot {
+  fill: var(--signal);
+}
+
+.g-line {
+  stroke: var(--ink-muted);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+
+.g-ring {
+  fill: color-mix(in srgb, var(--signal) 12%, transparent);
+  stroke: var(--signal);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* ---------- CSS device frames ---------- */
 
 .display-frame {
@@ -489,6 +593,55 @@
     }
   }
 
+  @keyframes aurora-drift {
+    from {
+      transform: translate3d(-4%, 3%, 0) scale(0.94);
+    }
+    to {
+      transform: translate3d(5%, -4%, 0) scale(1.1);
+    }
+  }
+
+  @keyframes draw-y {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  @keyframes draw-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes g-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes g-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+  }
+
+  @keyframes g-merge {
+    from {
+      transform: none;
+    }
+  }
+
+  @keyframes progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
   @keyframes sheet-up {
     from {
       opacity: 0;
@@ -542,6 +695,70 @@
       animation: nav-line linear both;
       animation-timeline: scroll();
       animation-range: 0 5rem;
+    }
+  }
+
+  .aurora > span {
+    animation: aurora-drift var(--dur, 30s) ease-in-out var(--delay, 0s) infinite alternate;
+    will-change: transform;
+  }
+
+  @supports (animation-timeline: view()) {
+    /* The capstone chart draws top to bottom as it scrolls into view. Every line follows the
+       chart's own timeline, so they run in order rather than each in its own few pixels. */
+    .team-y {
+      transform-origin: top;
+      animation: draw-y linear both;
+      animation-timeline: --team;
+      animation-range: entry var(--from) entry var(--to);
+    }
+
+    .team-x {
+      transform-origin: center;
+      animation: draw-x linear both;
+      animation-timeline: --team;
+      animation-range: entry var(--from) entry var(--to);
+    }
+
+    /* The matching schematic: each glyph follows its own step. */
+    .g-line {
+      animation: g-draw linear both;
+      animation-timeline: --step;
+      animation-range: entry 20% entry 75%;
+    }
+
+    .g-ring {
+      animation: g-pop linear both;
+      animation-timeline: --step;
+      animation-range: entry 30% entry 80%;
+    }
+
+    .g-merge {
+      animation: g-merge linear both;
+      animation-timeline: --step;
+      animation-range: entry 25% entry 80%;
+    }
+  }
+
+  /* A thin progress line in the four project colours, as the page scrolls. */
+  @supports (animation-timeline: scroll()) {
+    .nav::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      z-index: 1;
+      height: 2px;
+      background: linear-gradient(
+        90deg,
+        var(--hue-agencia),
+        var(--hue-probudget),
+        var(--hue-mymichlin),
+        var(--hue-nutritrack)
+      );
+      transform: scaleX(0);
+      transform-origin: 0 50%;
+      animation: progress linear both;
+      animation-timeline: scroll(root);
     }
   }
 

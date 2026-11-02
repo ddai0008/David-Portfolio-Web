@@ -22,7 +22,12 @@ const beats = [
 
 export function Leadership() {
   return (
-    <section id="leadership" className="relative overflow-hidden py-24 md:py-32">
+    <section id="leadership" className="relative isolate overflow-hidden py-24 md:py-32">
+      <div
+        className="wash"
+        style={vars({ "--hue": "var(--hue-agencia)", "--hue-2": "var(--hue-agencia-2)" })}
+        aria-hidden="true"
+      />
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Industry capstone · Aug 2026 – present</p>
@@ -64,36 +69,83 @@ export function Leadership() {
           </Tilt>
         </div>
 
-        <div className="reveal mt-20 md:mt-28">
-          <ul
-            className="grid grid-cols-3 gap-4 border-y border-hairline py-8 md:gap-10"
-            aria-label="Team make-up"
-          >
-            {team.map((group) => (
-              <li key={group.role} className="flex flex-col items-center gap-4 text-center">
-                <span className="flex gap-2" aria-hidden="true">
-                  {Array.from({ length: group.count }, (_, index) => (
+        {/* The team as a chart: the client, then me as the link, then the three groups. The lines are
+            decorative and draw as it scrolls in; the list underneath is what assistive technology
+            reads. */}
+        <div className="reveal mt-20 border-y border-hairline py-10 md:mt-28 md:py-14">
+          <div className="team [--g:1rem] md:[--g:2.5rem]">
+            <div className="flex flex-col items-center">
+              <span className="inline-flex items-center gap-2.5 rounded-full border border-hairline bg-paper-raised px-5 py-2.5 text-sm font-medium">
+                <span
+                  className="size-2 rounded-full"
+                  style={{ background: "var(--hue-agencia)" }}
+                  aria-hidden="true"
+                />
+                Agencia Change
+                <span className="font-normal text-ink-muted">client</span>
+              </span>
+              <span
+                className="team-line team-y h-7 w-px"
+                style={vars({ "--from": "5%", "--to": "30%" })}
+                aria-hidden="true"
+              />
+              <span className="rounded-full bg-ink px-6 py-3 text-center text-paper">
+                <span className="block font-semibold">David</span>
+                <span className="block text-xs">Team Lead and client liaison</span>
+              </span>
+              <span
+                className="team-line team-y h-7 w-px"
+                style={vars({ "--from": "25%", "--to": "45%" })}
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="relative">
+              <span
+                className="team-line team-x absolute top-0 h-px"
+                style={{
+                  left: "calc((100% - 2 * var(--g)) / 6)",
+                  right: "calc((100% - 2 * var(--g)) / 6)",
+                  ...vars({ "--from": "40%", "--to": "65%" }),
+                }}
+                aria-hidden="true"
+              />
+              <ul className="grid grid-cols-3 gap-[var(--g)]" aria-label="Team make-up">
+                {team.map((group) => (
+                  <li
+                    key={group.role}
+                    className="relative flex flex-col items-center gap-4 pt-7 text-center"
+                  >
                     <span
-                      key={index}
-                      className={`size-5 rounded-full bg-ink md:size-7 ${
-                        "note" in group && index === 0
-                          ? "outline-2 outline-offset-4 outline-signal"
-                          : ""
-                      }`}
+                      className="team-line team-y absolute top-0 left-1/2 h-7 w-px"
+                      style={vars({ "--from": "60%", "--to": "85%" })}
+                      aria-hidden="true"
                     />
-                  ))}
-                </span>
-                <span className="text-sm leading-snug font-medium md:text-base">
-                  {group.count} {group.role.toLowerCase()}
-                  {"note" in group && (
-                    <span className="block text-xs font-normal text-ink-muted md:text-sm">
-                      {group.note}
+                    <span className="flex gap-2" aria-hidden="true">
+                      {Array.from({ length: group.count }, (_, index) => (
+                        <span
+                          key={index}
+                          className={`size-5 rounded-full bg-ink md:size-7 ${
+                            "note" in group && index === 0
+                              ? "outline-2 outline-offset-4 outline-signal"
+                              : ""
+                          }`}
+                        />
+                      ))}
                     </span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+                    <span className="text-sm leading-snug font-medium md:text-base">
+                      {group.count} {group.role.toLowerCase()}
+                      {"note" in group && (
+                        <span className="block text-xs font-normal text-ink-muted md:text-sm">
+                          {group.note}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div className="mt-16 grid gap-12 md:mt-24 md:grid-cols-3 md:gap-10">
