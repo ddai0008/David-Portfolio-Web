@@ -47,3 +47,12 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Impeccable design skills. Installed per machine with `npx impeccable install` (the engine binary
+# alone is 22 MB), so they are not vendored here. Its project files under .impeccable/ and the
+# PRODUCT.md and DESIGN.md it writes are committed.
+/.claude/skills/impeccable/
+/.claude/agents/impeccable-*.md
+# Critique snapshots are local run history; the ignore list beside them records decisions.
+/.impeccable/critique/*
+!/.impeccable/critique/ignore.md
