@@ -1091,7 +1091,8 @@ test.describe("type and hierarchy", () => {
       }
       return greyChars / total;
     }, muted);
-    // It was 78% before the claims and the skills moved to ink; it is about 42% now.
+    // A deliberate ceiling, not a snapshot: it was 78% before the claims and the skills moved to ink and
+    // is about 42% now. If new copy pushes it over, set the claim in ink rather than raising this.
     expect(share).toBeLessThan(0.5);
   });
 
@@ -1172,15 +1173,31 @@ test.describe("type and hierarchy", () => {
     expect(Math.abs((await left("#education .stat-sm")) - (await left("#education .rounded-3xl")))).toBeLessThan(1);
   });
 
-  test("puts the footer links on the centre line, on wide screens", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === "mobile", "the footer stacks on a phone");
-    await page.goto("/");
-    const offset = await page.locator("footer ul").first().evaluate((node) => {
-      const box = node.getBoundingClientRect();
-      return Math.abs(box.left + box.width / 2 - document.documentElement.clientWidth / 2);
+  for (const width of [1024, 1440]) {
+    test(`puts the footer links on the centre line at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const offset = await page.locator("footer ul").first().evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        return Math.abs(box.left + box.width / 2 - document.documentElement.clientWidth / 2);
+      });
+      expect(offset).toBeLessThan(2);
     });
-    expect(offset).toBeLessThan(2);
-  });
+  }
+
+  for (const width of [768, 1024, 1440]) {
+    test(`keeps the footer credits on one line at ${width}px`, async ({ page }) => {
+      // The pause button is only there when motion is allowed, and it is what makes the group widest.
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const credits = page.locator("footer p", { hasText: "Built with" });
+      await expect(page.getByRole("button", { name: /background motion/ })).toBeVisible();
+      const height = await credits.evaluate((node) => node.getBoundingClientRect().height);
+      // One 15px line is about 23px tall; two would be 45px.
+      expect(height).toBeLessThan(30);
+    });
+  }
 
   // The base overhangs the lid on a desktop, as a real one does. Below lg the column is narrow enough
   // that the overhang would reach the gutter, so the two line up: on a phone, and at 820px, where the

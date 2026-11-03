@@ -247,8 +247,15 @@ test("fits each project's words between the bar and the progress dots on a 600px
   ]) {
     await jumpTo(page, id);
     await expect(activeTitle(page)).toHaveText(title);
-    // Let the cross-fade and its slide settle, so the box is where it rests.
-    await page.waitForTimeout(900);
+    // Wait for the cross-fade and its slide to finish, so the box is where it rests.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const style = getComputedStyle(document.querySelector('#work article[data-active="true"]')!);
+          return style.opacity === "1" && style.transform === "none";
+        }),
+      )
+      .toBe(true);
     const room = await page.evaluate(() => {
       const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
       const panel = box('#work article[data-active="true"]');
