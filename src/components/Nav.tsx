@@ -22,7 +22,7 @@ export function Nav() {
           <a
             href={person.resume}
             download
-            className="btn btn-primary !min-h-9 !px-4 !text-sm"
+            className="btn btn-primary !min-h-9 !px-4 !text-[0.9375rem]"
           >
             Résumé
           </a>

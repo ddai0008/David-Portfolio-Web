@@ -39,10 +39,8 @@ export function Hero() {
             </span>
           </h1>
 
-          <p
-            className="hero-in mt-7 max-w-3xl text-[clamp(1.5rem,3.8vw,2.75rem)] leading-[1.12] font-semibold tracking-[-0.022em] text-balance text-ink-muted"
-            style={vars({ "--i": 3 })}
-          >
+          {/* The claim the whole page backs up, so it is ink, not the grey of the lines under it. */}
+          <p className="hero-in title mt-7 max-w-3xl" style={vars({ "--i": 3 })}>
             Software engineer who ships — and leads.
           </p>
 

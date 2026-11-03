@@ -18,7 +18,7 @@ export function Contact() {
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Contact · Available from December 2026</p>
-          <h2 className="display mt-5">Let’s talk.</h2>
+          <h2 className="display-sm mt-5">Let’s talk.</h2>
           <p className="lede mt-6 max-w-xl">
             Looking for a graduate software engineering role. Data and analytics, and solution
             delivery, fit too.

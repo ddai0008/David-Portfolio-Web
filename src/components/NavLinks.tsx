@@ -40,7 +40,7 @@ export function NavLinks() {
           <a
             href={link.href}
             aria-current={current === link.href ? "location" : undefined}
-            className="text-sm text-ink-muted no-underline transition-colors hover:text-ink aria-[current=location]:text-ink"
+            className="text-[0.9375rem] text-ink-muted no-underline transition-colors hover:text-ink aria-[current=location]:text-ink"
           >
             {link.label}
           </a>

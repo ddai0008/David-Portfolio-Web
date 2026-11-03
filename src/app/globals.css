@@ -96,7 +96,6 @@
      it only show if the web font fails to load. */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     var(--font-inter), system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 /* In the base layer so Tailwind utilities (text-ink, no-underline...) can override these. */
@@ -139,7 +138,11 @@
   }
 }
 
-/* ---------- Type scale. One idea per screen, said big. ---------- */
+/* ---------- Type scale. One idea per screen, said big. ----------
+   Sizes: 13 (labels, chips), 15 (captions), 17 (body, controls), 24 (lede), 44 (title), 72 (headline),
+   the stat numerals and the display. Weights: 400, 500, 600, 700. Running text sits at a line height of
+   1.5 and a lede at 1.4. Tight tracking also narrows the word space, so the big sizes add a little
+   word-spacing back: at -0.026em Inter's space fell from 0.222em to 0.196em, and "hours. Cleaner" closed up. */
 
 @utility display {
   /* Scales with the screen's height as well as its width, so on a short laptop the name does not
@@ -148,22 +151,56 @@
   line-height: 0.95;
   font-weight: 700;
   letter-spacing: -0.034em;
+  word-spacing: 0.04em;
+}
+
+/* The name stays the largest thing on the page, so the closing line is a step down. */
+@utility display-sm {
+  font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 0.95;
+  font-weight: 700;
+  letter-spacing: -0.034em;
+  word-spacing: 0.04em;
 }
 
 @utility headline {
   font-size: clamp(2.25rem, 6vw, 4.5rem);
-  line-height: 1.04;
-  font-weight: 650;
+  /* Three lines on a phone need a little more than the two-line desktop setting. */
+  line-height: 1.08;
+  font-weight: 600;
   letter-spacing: -0.026em;
+  word-spacing: 0.04em;
   text-wrap: balance;
+  @media (min-width: 48rem) {
+    line-height: 1.04;
+  }
 }
 
 @utility title {
   font-size: clamp(1.75rem, 3.4vw, 2.75rem);
   line-height: 1.1;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.02em;
+  word-spacing: 0.04em;
   text-wrap: balance;
+}
+
+/* The big figures: Impact's four results. */
+@utility stat {
+  font-size: clamp(3.25rem, 9vw, 6.5rem);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The GPA and WAM: the same face a step down (the headline's size), since they sit beside a heading. */
+@utility stat-sm {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.034em;
+  font-variant-numeric: tabular-nums;
 }
 
 @utility lede {
@@ -176,7 +213,8 @@
 
 @utility eyebrow {
   font-size: 0.8125rem;
-  line-height: 1.2;
+  /* Some labels wrap to a second line on a phone. */
+  line-height: 1.35;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -220,7 +258,7 @@
   padding: 0 1.5rem;
   border-radius: 999px;
   font-size: 1.0625rem;
-  font-weight: 560;
+  font-weight: 600;
   letter-spacing: -0.01em;
   text-decoration: none;
   cursor: pointer;
@@ -482,12 +520,20 @@
 /* The underline exists only while a project is chosen. A transparent one would not stay
    invisible: forced colours repaints every underline in the text colour. */
 .skill {
-  color: var(--mark-text, var(--ink-muted));
+  /* A skill takes the colour of the list it sits in: ink for what is known well, grey for "working
+     knowledge". currentColor on `color` computes to inherit. */
+  color: var(--mark-text, currentColor);
   text-decoration-line: var(--mark-line, none);
   text-decoration-color: var(--mark, currentColor);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.32em;
   transition: color 200ms ease;
+}
+
+/* While a project is chosen the skills it does not use step back, so the chosen ones stand out by
+   colour as well as by their underline. The rules below name the project and outrank this one. */
+.skills-explorer:has(input[name="skills-project"]:not([value="none"]):checked) .skill {
+  --mark-text: var(--ink-muted);
 }
 
 .skill-dots {
@@ -608,6 +654,14 @@
     var(--device)
   );
   box-shadow: 0 30px 50px -18px color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+/* The base is a little wider than the lid. Below lg the column is narrow enough that the overhang
+   would reach the page gutter, and at 820px it came within 8px of the window edge. */
+@media (max-width: 63.99rem) {
+  .laptop-base {
+    margin-inline: 0;
+  }
 }
 
 .laptop-base::before {

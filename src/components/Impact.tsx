@@ -19,7 +19,7 @@ export function Impact() {
         <dl className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:mt-24 md:grid-cols-2">
           {impact.map((stat) => (
             <div key={stat.figure} className="reveal-soft bg-paper-alt px-7 py-10 md:px-12 md:py-14">
-              <dt className="text-[clamp(3.25rem,9vw,6.5rem)] leading-none font-bold tracking-[-0.04em] tabular-nums">
+              <dt className="stat">
                 {"spoken" in stat ? (
                   <>
                     <span aria-hidden="true">{stat.figure}</span>
@@ -31,7 +31,7 @@ export function Impact() {
                   stat.figure
                 )}
               </dt>
-              <dd className="mt-5 max-w-sm text-[1.0625rem] leading-relaxed text-ink-muted">
+              <dd className="mt-5 max-w-sm text-[1.0625rem] leading-normal">
                 {stat.caption}
               </dd>
             </div>
@@ -46,18 +46,18 @@ export function Impact() {
             <li key={step.label} className="flow-step reveal-soft border-t-2 border-ink pt-5">
               <MatchGlyph step={index as 0 | 1 | 2 | 3} />
               <span
-                className="mt-4 block text-sm font-medium text-ink-muted tabular-nums"
+                className="mt-4 block text-[0.9375rem] font-medium text-ink-muted tabular-nums"
                 aria-hidden="true"
               >
                 0{index + 1}
               </span>
               <h3 className="title mt-2">{step.label}</h3>
-              <p className="mt-2 text-[1.0625rem] leading-snug text-ink-muted">{step.text}</p>
+              <p className="mt-2 text-[1.0625rem] leading-normal">{step.text}</p>
             </li>
           ))}
         </ol>
 
-        <p className="reveal mt-12 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-muted">
+        <p className="reveal mt-12 max-w-2xl text-[0.9375rem] leading-normal text-ink-muted">
           The matching logic is documented for reuse. I recommended the human review step because
           this is sensitive donor information.
         </p>
