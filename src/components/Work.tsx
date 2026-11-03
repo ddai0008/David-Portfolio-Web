@@ -87,10 +87,10 @@ export function Work() {
       title: "ProBudget",
       summary: "A live finance app for tracking recurring subscriptions and budget trends, in a responsive, dark-mode interface.",
       highlights: [
-        "I architected, built and deployed it, with a PostgreSQL schema and indexes designed for fast retrieval as data grows.",
-        "The database is moving to Azure, where I put my DP-900 to work.",
+        "I architected, built and deployed it, with a schema and indexes designed for fast retrieval as data grows.",
+        "I moved its database from PostgreSQL to Azure SQL Database, where I put my DP-900 to work.",
       ],
-      chips: ["Next.js 15", "TypeScript", "PostgreSQL (Neon)", "Vercel"],
+      chips: ["Next.js 15", "TypeScript", "Azure SQL Database", "Vercel"],
       art: (
         <Tilt className="relative mx-auto max-w-2xl" max={4}>
           <div className="reveal">
@@ -136,16 +136,18 @@ export function Work() {
             </SheetSection>
             <SheetSection title="Decisions">
               <Fact>
-                I designed the PostgreSQL schema and indexing strategy so transaction retrieval
-                stays efficient as the data grows.
+                I designed the schema and indexing strategy so transaction retrieval stays
+                efficient as the data grows.
               </Fact>
               <Fact>
-                The database is moving to Microsoft Azure, which is where I apply my DP-900
-                certification in practice.
+                I then moved the production database from PostgreSQL to Azure SQL Database, which
+                is where I apply my DP-900 certification in practice. The SQL was translated
+                across about 40 call sites behind one data-access layer, money is bound as exact
+                decimals, and the app retries while the serverless database resumes from a pause.
               </Fact>
             </SheetSection>
             <SheetSection title="Stack">
-              <Fact>Next.js 15, React, TypeScript, Tailwind CSS, PostgreSQL (Neon), Vercel.</Fact>
+              <Fact>Next.js 15, React, TypeScript, Tailwind CSS, Azure SQL Database, Vercel.</Fact>
             </SheetSection>
             <SheetSection title="Try it">
               <Fact>

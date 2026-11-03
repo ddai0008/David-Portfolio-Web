@@ -174,6 +174,45 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
+test("never prints two projects' words over each other while the stage swaps", async ({ page }) => {
+  test.setTimeout(120_000);
+  await waitForStage(page);
+  await jumpTo(page, "probudget");
+  await expect(activeTitle(page)).toHaveText("ProBudget");
+
+  // The three text panels share one spot, so two of them partly visible at once would overprint.
+  // Sample every few milliseconds while the stage moves through the other two projects.
+  const mostVisible = await page.evaluate(
+    (ids) =>
+      new Promise<number>((resolve) => {
+        const panels = [...document.querySelectorAll<HTMLElement>("#work .stage-panel")];
+        let most = 0;
+        const sample = () => {
+          const visible = panels.filter((panel) => Number(getComputedStyle(panel).opacity) > 0.1);
+          most = Math.max(most, visible.length);
+        };
+        const timer = setInterval(sample, 8);
+        let step = 0;
+        const next = () => {
+          if (step === ids.length) {
+            setTimeout(() => {
+              clearInterval(timer);
+              sample();
+              resolve(most);
+            }, 900);
+            return;
+          }
+          document.getElementById(ids[step++])?.scrollIntoView({ behavior: "instant" });
+          setTimeout(next, 900);
+        };
+        next();
+      }),
+    ["mymichlin", "nutritrack"],
+  );
+  // At least one proves the sampling saw the active panel; more than one is the overprint.
+  expect(mostVisible).toBe(1);
+});
+
 test("has no accessibility violations on the stage", async ({ page }) => {
   test.setTimeout(120_000);
   await waitForStage(page);

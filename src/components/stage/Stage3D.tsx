@@ -11,10 +11,11 @@ import type { SceneState } from "./devices";
 import { sceneProgress } from "./progress";
 
 const laptopScreens = [images["work/probudget-transactions"].src] as const;
+// The screens fade through in this order as the scene scrolls, and the middle one is what rests on
+// the phone when the scene is centred (or reached from a link), so it is the strongest: the home
+// screen. The onboarding frames live in the details sheet.
 const iphoneScreens = [
   images["work/mymichlin-splash"].src,
-  images["work/mymichlin-onboarding-1"].src,
-  images["work/mymichlin-onboarding-2"].src,
   images["work/mymichlin-dashboard"].src,
   images["work/mymichlin-search"].src,
 ] as const;

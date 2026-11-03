@@ -7,7 +7,7 @@
 web
 
 ## Users
-Graduate-program recruiters and hiring managers screening applicants for graduate roles in software engineering, with solution delivery and business analysis as secondary fits. They skim for about ten seconds first (role, degree, work rights, availability, one or two proof points), then read deeper if it holds up. They arrive from an application, a résumé or a LinkedIn profile, on a laptop or a phone.
+Graduate-program recruiters and hiring managers screening applicants for graduate roles in software engineering, with data and analytics, and solution delivery, as secondary fits (the résumé header lists the same three). They skim for about ten seconds first (role, degree, work rights, availability, one or two proof points), then read deeper if it holds up. They arrive from an application, a résumé or a LinkedIn profile, on a laptop or a phone.
 
 A second, smaller audience is engineers and hiring managers who read the projects in depth.
 

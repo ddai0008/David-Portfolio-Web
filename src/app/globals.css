@@ -1101,17 +1101,23 @@
   opacity: 1;
 }
 
+/* The panels share one grid cell, so two projects' words must never be partly visible at once:
+   the outgoing panel clears in 160ms, and the incoming one waits 180ms before it fades in. A
+   transition uses the rule of the state it is going to, which is what makes the two differ. */
 .stage-panel {
   opacity: 0;
   transform: translateY(1.5rem);
   pointer-events: none;
   transition:
-    opacity 500ms ease,
-    transform 500ms ease;
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
 .stage-panel[data-active="true"] {
   opacity: 1;
   transform: none;
   pointer-events: auto;
+  transition:
+    opacity 360ms ease 180ms,
+    transform 360ms ease 180ms;
 }

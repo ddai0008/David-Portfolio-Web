@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { evidence, skillEvidence, skills } from "../../src/content/site";
+import { evidence, skillEvidence, skills, workingKnowledge } from "../../src/content/site";
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -58,7 +58,7 @@ test("puts the facts a recruiter scans for just under the hero", async ({ page }
 test("says what each project did without opening a sheet", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.locator("#probudget").getByText("The database is moving to Azure, where"),
+    page.locator("#probudget").getByText("I moved its database from PostgreSQL to Azure SQL Database"),
   ).toBeVisible();
   await expect(
     page.locator("#mymichlin").getByText("Custom map annotations, built with async Swift."),
@@ -78,6 +78,75 @@ test("claims only what it can back up", async ({ page }) => {
   await expect(body).not.toContainText("100% precision");
   // The time-limited wording goes stale the week he graduates.
   await expect(body).not.toContainText(/graduating November 2026|final-year/i);
+});
+
+// The résumé PDF and the academic record are what a recruiter checks the page against.
+test.describe("agrees with the résumé and the academic record", () => {
+  test("names each High Distinction unit as the record does, with the marks the résumé gives", async ({ page }) => {
+    await page.goto("/");
+    const education = page.locator("#education");
+    const units = {
+      "iOS App Development": 95,
+      "Mobile Application Development": undefined,
+      "Web Database Interface": undefined,
+      "Programming Fundamentals in Java": undefined,
+      "Introductory Econometrics": 90,
+      "Data Analysis in Business": 91,
+      "Statistical Foundations of Business Analytics": undefined,
+      "Data Visualisation and Analytics": undefined,
+    };
+    for (const [name, mark] of Object.entries(units)) {
+      const row = education.getByRole("listitem").filter({ hasText: name });
+      await expect(row, name).toHaveCount(1);
+      if (mark !== undefined) await expect(row, `${name} mark`).toContainText(String(mark));
+    }
+    // Titles the page used before the record was checked.
+    for (const retired of ["Object-Oriented Programming", "iOS Development", "Web Database Interfaces"]) {
+      await expect(education.getByText(retired, { exact: true }), retired).toHaveCount(0);
+    }
+  });
+
+  test("claims no result that is not confirmed yet", async ({ page }) => {
+    await page.goto("/");
+    const education = page.locator("#education");
+    await expect(education).toContainText("Industry Capstone and Applied Econometrics are in progress");
+    // The page names a unit only once its result is confirmed. Take a name off this list when that
+    // happens, and add the unit to the High Distinction groups.
+    for (const unit of [
+      "Software Security",
+      "Industry Placement",
+      "Business Forecasting",
+      "Predictive Analytics and Machine Learning",
+    ]) {
+      await expect(education, unit).not.toContainText(unit);
+    }
+  });
+
+  test("separates working knowledge from the rest of the skills, as the résumé does", async ({ page }) => {
+    await page.goto("/");
+    const working = page.getByRole("list", { name: "Working knowledge" }).locator(".skill");
+    // The first text node is the skill itself; the rest is the dots and the spoken evidence.
+    const names = await working.evaluateAll((items) =>
+      items.map((item) => item.childNodes[0]?.textContent?.trim() ?? ""),
+    );
+    expect(names.sort()).toEqual([...workingKnowledge].sort());
+    await expect(working.filter({ hasText: "TypeScript" })).toHaveCount(0);
+  });
+
+  test("says ProBudget runs on Azure SQL Database, not that it is about to", async ({ page }) => {
+    await page.goto("/");
+    const body = page.locator("body");
+    await expect(page.locator("#probudget")).toContainText("Azure SQL Database");
+    await expect(body).not.toContainText(/moving to (Microsoft )?Azure/i);
+    await expect(body).not.toContainText("Neon");
+  });
+
+  test("names the same secondary targets as the résumé header", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#contact")).toContainText("software engineering");
+    await expect(page.locator("#contact")).toContainText("Data and analytics");
+    await expect(page.locator("#contact")).toContainText("solution delivery");
+  });
 });
 
 test("shows the matching flow in order", async ({ page }) => {

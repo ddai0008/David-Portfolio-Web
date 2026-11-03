@@ -79,12 +79,41 @@ export const matchingFlow = [
   { label: "Review", text: "Human review for the final merge decision" },
 ] as const;
 
-export const highDistinction = [
-  "Mobile Application Development",
-  "iOS Development",
-  "Web Database Interfaces",
-  "Object-Oriented Programming",
-] as const;
+// The High Distinction units, under the titles on the Monash academic record. A mark is shown
+// where the résumé gives one. A unit whose result is not confirmed yet is left out, so the page
+// never claims a result it cannot back up.
+export const highDistinction: readonly {
+  label: string;
+  units: readonly { name: string; mark?: number }[];
+}[] = [
+  {
+    label: "Software and IT",
+    units: [
+      { name: "iOS App Development", mark: 95 },
+      { name: "Mobile Application Development" },
+      { name: "Web Database Interface" },
+      { name: "Programming Fundamentals in Java" },
+    ],
+  },
+  {
+    label: "Data and analytics",
+    units: [
+      { name: "Introductory Econometrics", mark: 90 },
+      { name: "Data Analysis in Business", mark: 91 },
+      { name: "Statistical Foundations of Business Analytics" },
+      { name: "Data Visualisation and Analytics" },
+    ],
+  },
+];
+
+// The résumé calls these "working knowledge", so the page does too.
+export const workingKnowledge: readonly string[] = [
+  "Java",
+  "Python",
+  "Swift",
+  "Kotlin",
+  "Microsoft Dynamics",
+];
 
 export const skills = [
   {
