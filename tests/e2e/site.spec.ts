@@ -1233,3 +1233,146 @@ test.describe("type and hierarchy", () => {
     expect(widths.base).toBeGreaterThan(widths.frame);
   });
 });
+
+test.describe("links, glow and the first screen", () => {
+  // Resolves tokens to the colour they paint, so the tests follow the palette rather than a hex code.
+  const palette = (page: Page) =>
+    page.evaluate(() => {
+      const resolve = (token: string) => {
+        const probe = document.createElement("i");
+        probe.style.color = `var(${token})`;
+        document.body.append(probe);
+        const value = getComputedStyle(probe).color;
+        probe.remove();
+        return value;
+      };
+      return { ink: resolve("--ink"), muted: resolve("--ink-muted"), link: resolve("--link") };
+    });
+  const style = (page: Page, selector: string, property: string) =>
+    page.locator(selector).first().evaluate((node, name) => getComputedStyle(node).getPropertyValue(name), property);
+
+  test("marks a link the way the page's one rule says", async ({ page }) => {
+    await page.goto("/");
+    const { ink, link } = await palette(page);
+    // Cobalt: a text link or a bare mark.
+    for (const selector of [
+      "#top a[href*='linkedin']",
+      "#top a[href*='github']",
+      "#top a[href*='pro-budget']",
+      "footer a[href*='linkedin']",
+      "footer a[href^='mailto']",
+    ]) {
+      expect(await style(page, selector, "color"), `${selector} is cobalt`).toBe(link);
+    }
+    // Ink: a pill, and the display-size email, whose cobalt is its underline.
+    for (const selector of ["#top .btn-secondary", "#contact a[href*='linkedin']", "#contact a[href^='mailto']"]) {
+      expect(await style(page, selector, "color"), `${selector} is ink`).toBe(ink);
+    }
+  });
+
+  test("gives the Contact email an underline you can see, in the link colour", async ({ page }) => {
+    await page.goto("/");
+    const { link } = await palette(page);
+    const email = "#contact a[href^='mailto']";
+    // It was the hairline grey, which is 1.46:1 against paper.
+    expect(await style(page, email, "text-decoration-color")).toBe(link);
+    expect(await style(page, email, "text-decoration-line")).toContain("underline");
+    expect(parseFloat(await style(page, email, "text-decoration-thickness"))).toBeGreaterThanOrEqual(2);
+  });
+
+  test("turns the Contact email cobalt on hover", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "a touch screen has no hover");
+    await page.goto("/");
+    const { link } = await palette(page);
+    await page.locator("#contact a[href^='mailto']").hover();
+    expect(await style(page, "#contact a[href^='mailto']", "color")).toBe(link);
+  });
+
+  test("underlines a link that sits inside a sentence", async ({ page }) => {
+    await page.goto("/");
+    // The only link set inside a sentence is the demo address in ProBudget's details.
+    expect(await style(page, "dialog a[href*='pro-budget']", "text-decoration-line")).toContain("underline");
+  });
+
+  test("underlines a standalone link on hover", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "a touch screen has no hover");
+    await page.goto("/");
+    const standalone = "footer a[href^='mailto']";
+    expect(await style(page, standalone, "text-decoration-line")).not.toContain("underline");
+    await page.locator(standalone).hover();
+    expect(await style(page, standalone, "text-decoration-line")).toContain("underline");
+  });
+
+  test("puts the buttons and the profile marks in one row, on wide screens", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "the marks wrap under the buttons on a phone");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const centre = (selector: string) =>
+      page.locator(selector).first().evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        return box.top + box.height / 2;
+      });
+    const row = await centre("#top .btn-primary");
+    for (const selector of ["#top .btn-secondary", "#top a[href*='linkedin']", "#top a[href*='github']"]) {
+      expect(Math.abs((await centre(selector)) - row), `${selector} shares the buttons' row`).toBeLessThan(12);
+    }
+  });
+
+  test("sets the project row as one quiet line, with no capitals label", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "the row wraps on a phone");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const { muted } = await palette(page);
+    const nav = "#top nav[aria-label='Selected work']";
+    // The label used to be a 13px capitals line of its own above the links.
+    await expect(page.locator(`${nav} .eyebrow`)).toHaveCount(0);
+    expect(await style(page, `${nav} p`, "text-transform")).toBe("none");
+    const tops = await page.evaluate((selector) => {
+      const label = document.querySelector(`${selector} p`)!.getBoundingClientRect();
+      return [...document.querySelectorAll(`${selector} a`)].map((link) => {
+        const box = link.getBoundingClientRect();
+        return Math.abs(box.top + box.height / 2 - (label.top + label.height / 2));
+      });
+    }, nav);
+    expect(tops).toHaveLength(4);
+    for (const offset of tops) expect(offset, "each project link is on the label's line").toBeLessThan(8);
+    // Secondary navigation, like the bar: 15px and grey.
+    expect(await style(page, `${nav} a`, "color")).toBe(muted);
+    expect(await style(page, `${nav} a`, "font-size")).toBe("15px");
+  });
+
+  test("centres the hero's glow behind the laptop, in the laptop's own colour", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "the laptop sits under the text on a phone");
+    for (const width of [768, 820, 1024, 1280, 1440, 1920]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const where = await page.evaluate(() => {
+        const centre = (node: Element) => {
+          const box = node.getBoundingClientRect();
+          return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+        };
+        const pools = [...document.querySelectorAll("#top .aurora > span")];
+        const blue = pools.find((pool) => (pool as HTMLElement).style.getPropertyValue("--hue").includes("probudget"))!;
+        return { blue: centre(blue), laptop: centre(document.querySelector("#top .laptop-frame")!), pools: pools.length };
+      });
+      expect(Math.abs(where.blue.x - where.laptop.x), `${width}px: pool is centred across the laptop`).toBeLessThan(16);
+      expect(Math.abs(where.blue.y - where.laptop.y), `${width}px: pool is centred down the laptop`).toBeLessThan(40);
+      expect(where.pools).toBe(2);
+    }
+  });
+
+  test("keeps the four project colours for the closing glow", async ({ page }) => {
+    await page.goto("/");
+    const hues = (selector: string) =>
+      page.evaluate(
+        (sel) =>
+          [...document.querySelectorAll(sel)].map((pool) =>
+            (pool as HTMLElement).style.getPropertyValue("--hue").replace(/var\(--hue-|\)/g, ""),
+          ),
+        selector,
+      );
+    // Mixed in the hero they turned to beige and blush; the capstone's teal is the only second pool.
+    expect(await hues("#top .aurora > span")).toEqual(["probudget", "agencia"]);
+    expect((await hues("#contact .aurora > span")).sort()).toEqual(["agencia", "mymichlin", "nutritrack", "probudget"]);
+  });
+});

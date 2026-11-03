@@ -152,7 +152,12 @@ export function Work() {
             <SheetSection title="Try it">
               <Fact>
                 The demo account is printed on the sign-in page at{" "}
-                <a href={proBudgetDemo} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={proBudgetDemo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >
                   pro-budget.vercel.app
                 </a>
                 . The source repository is private.

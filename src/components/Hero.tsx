@@ -11,16 +11,17 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="dots relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-[clamp(4.5rem,11svh,6rem)] pb-10"
+      className="dots relative isolate flex min-h-[calc(100svh-7rem)] flex-col justify-center pt-[clamp(4.5rem,11svh,6rem)] hero-glow pb-10"
       style={vars({ "--dots-at": "76% 46%", "--dots-w": "70%", "--dots-h": "80%", "--dots-in": 1, "--dots-out": 0.25 })}
     >
+      {/* The colour of the project on the laptop, centred behind it, and the capstone's teal in the
+          corner. All four colours are already in the project row below, and the closing section
+          brings the four pools back; mixed here they turned to beige and blush on paper. */}
       <Aurora
         fade="bottom"
         blobs={[
-          { hue: "agencia", x: "74%", y: "20%", size: "56%", dur: 34 },
-          { hue: "probudget", x: "58%", y: "52%", size: "50%", dur: 28, delay: -9 },
-          { hue: "mymichlin", x: "92%", y: "68%", size: "44%", dur: 31, delay: -17 },
-          { hue: "nutritrack", x: "34%", y: "92%", size: "42%", dur: 37, delay: -5 },
+          { hue: "probudget", x: "var(--glow-x)", y: "var(--glow-y)", size: "72%", dur: 34 },
+          { hue: "agencia", x: "95%", y: "6%", size: "40%", dur: 28, delay: -9 },
         ]}
       />
       <div className="wrap grid items-center gap-x-8 gap-y-20 md:grid-cols-12">
@@ -49,8 +50,10 @@ export function Hero() {
             Australian citizen.
           </p>
 
+          {/* Every way to reach David in one row. Recruiters check a profile before anything else, so
+              the marks sit with the buttons rather than on a row of their own. */}
           <div
-            className="hero-in mt-10 flex flex-wrap items-center gap-x-6 gap-y-4"
+            className="hero-in mt-10 flex flex-wrap items-center gap-x-6 gap-y-5"
             style={vars({ "--i": 5 })}
           >
             <a href={person.resume} download className="btn btn-primary">
@@ -59,42 +62,44 @@ export function Hero() {
             <a href={`mailto:${person.email}`} className="btn btn-secondary">
               Email me
             </a>
+            <p className="flex items-center gap-x-6">
+              <ProfileLink kind="linkedin" className="hit transition-opacity hover:opacity-70" />
+              <ProfileLink kind="github" className="hit transition-opacity hover:opacity-70" />
+            </p>
           </div>
-
-          {/* Recruiters check a profile before anything else, so it is not left to the last section. */}
-          <p
-            className="hero-in mt-5 flex items-center gap-x-6"
-            style={vars({ "--i": 6 })}
-          >
-            <ProfileLink kind="linkedin" className="hit transition-opacity hover:opacity-70" />
-            <ProfileLink kind="github" className="hit transition-opacity hover:opacity-70" />
-          </p>
 
           <nav
             aria-label="Selected work"
             className="hero-in mt-12 md:mt-[clamp(1.5rem,6svh,5rem)]"
             style={vars({ "--i": 7 })}
           >
-            <p className="eyebrow">Selected work</p>
-            <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-3 [@media(pointer:coarse)]:gap-y-[1.125rem]">
-              {selectedWork.map((item) => (
-                <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className="hit group inline-flex items-center gap-2.5 text-[1.0625rem] font-medium text-ink no-underline"
-                  >
-                    <span
-                      className="keep-colour size-2.5 rounded-full transition-transform group-hover:scale-150"
-                      style={{ background: `var(--hue-${item.hue})` }}
-                      aria-hidden="true"
-                    />
-                    <span className="underline decoration-transparent underline-offset-4 transition-colors group-hover:decoration-hairline">
-                      {item.label}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {/* A lead-in on the same line as the links, not a capitals label above them. The links
+                are 15px and grey like the bar's, since they are a second way in, not the first. On
+                touch the rows sit 21px apart so each link's 44px tap area stays its own. */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-[0.9375rem]">
+              <p className="text-ink-muted" aria-hidden="true">
+                Selected work
+              </p>
+              <ul className="flex flex-wrap gap-x-6 gap-y-3 [@media(pointer:coarse)]:gap-y-[1.3125rem]">
+                {selectedWork.map((item) => (
+                  <li key={item.href}>
+                    <a
+                      href={item.href}
+                      className="hit group inline-flex items-center gap-2.5 font-medium text-ink-muted no-underline transition-colors hover:text-ink"
+                    >
+                      <span
+                        className="keep-colour size-2 rounded-full transition-transform group-hover:scale-150"
+                        style={{ background: `var(--hue-${item.hue})` }}
+                        aria-hidden="true"
+                      />
+                      <span className="underline decoration-transparent underline-offset-4 transition-colors group-hover:decoration-current">
+                        {item.label}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </nav>
         </div>
 
@@ -121,7 +126,7 @@ export function Hero() {
               href={proBudgetDemo}
               target="_blank"
               rel="noopener noreferrer"
-              className="hit font-medium underline-offset-4"
+              className="hit font-medium underline-offset-4 hover:underline"
             >
               ProBudget, live: try the demo
               <span className="sr-only"> (opens in a new tab)</span>

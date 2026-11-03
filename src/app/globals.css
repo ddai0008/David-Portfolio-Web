@@ -113,8 +113,15 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* How a link says it is one. Cobalt marks a link: a text link or a bare mark (the hero and footer
+     profile icons). A link inside a sentence is always underlined; a standalone one underlines on
+     hover. Pills stay ink, since primary buttons are ink and blue is for links only, and so does a
+     display-size link (the Contact email), which carries its cobalt in a 2px underline instead. The
+     underline's weight and offset are set here so no link falls back to the browser's. */
   a {
     color: var(--link);
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
   }
 
   p,
@@ -394,6 +401,22 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
+}
+
+/* Where the hero's blue pool centres: behind the laptop. From md the laptop's column is the right-hand
+   5 of 12, whose centre is about 0.3 of the content width right of the page's centre (the content is
+   the page less its gutters, up to 76rem), so the pool follows it from a tablet to a wide desktop. On
+   a phone the laptop sits under the text, near the foot of the section. */
+.hero-glow {
+  --glow-x: 50%;
+  --glow-y: 78%;
+}
+
+@media (min-width: 48rem) {
+  .hero-glow {
+    --glow-x: calc(50% + min(100% - 2.5rem, 76rem) * 0.3);
+    --glow-y: 50%;
+  }
 }
 
 .aurora-fade-bottom {
