@@ -181,7 +181,27 @@ test("never prints two projects' words over each other while the stage swaps", a
   await expect(activeTitle(page)).toHaveText("ProBudget");
 
   // The three text panels share one spot, so two of them partly visible at once would overprint.
-  // Sample every few milliseconds while the stage moves through the other two projects.
+  // First the rule that prevents it, read from the styles so it does not depend on frame timing:
+  // a panel that is leaving finishes fading before the one arriving begins.
+  const { leaving, arriving } = await page.evaluate(() => {
+    const ms = (value: string) => parseFloat(value) * (value.includes("ms") ? 1 : 1000);
+    const timing = (panel: Element | undefined) => {
+      const style = getComputedStyle(panel!);
+      return { duration: ms(style.transitionDuration), delay: ms(style.transitionDelay) };
+    };
+    const panels = [...document.querySelectorAll("#work .stage-panel")];
+    return {
+      leaving: timing(panels.find((panel) => panel.getAttribute("data-active") === "false")),
+      arriving: timing(panels.find((panel) => panel.getAttribute("data-active") === "true")),
+    };
+  });
+  expect(leaving.delay + leaving.duration, "the leaving panel is gone before the next appears").toBeLessThanOrEqual(
+    arriving.delay,
+  );
+
+  // Then the behaviour: sample every few milliseconds while the stage moves through the other two
+  // projects. A busy machine can make the sampling too sparse to catch an overlap, which is why the
+  // rule above is checked on its own.
   const mostVisible = await page.evaluate(
     (ids) =>
       new Promise<number>((resolve) => {
