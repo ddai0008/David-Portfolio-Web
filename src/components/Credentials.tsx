@@ -11,7 +11,7 @@ export function Credentials() {
           <p className="eyebrow">Monash University · Bachelor of IT and Business · 2026</p>
           <h2 className="headline mt-5 max-w-4xl">Double degree, finishing strong.</h2>
           <p className="lede mt-6 max-w-2xl">
-            Majors in Software Development and Business Analytics.
+            Majors in Software Development and in Business Analytics and Statistics.
           </p>
         </div>
 
@@ -28,15 +28,36 @@ export function Credentials() {
 
         <div className="reveal-soft md:col-span-7">
           <h3 className="eyebrow">High Distinction</h3>
-          <ul className="mt-4 divide-y divide-hairline border-y border-hairline">
-            {highDistinction.map((subject) => (
-              <li key={subject} className="py-3.5 text-lg font-medium tracking-tight">
-                {subject}
-              </li>
+          <div className="mt-4 grid gap-x-8 gap-y-8 sm:grid-cols-2">
+            {highDistinction.map((group, index) => (
+              <div key={group.label}>
+                <p id={`hd-group-${index}`} className="text-[0.9375rem] font-semibold tracking-tight">
+                  {group.label}
+                </p>
+                <ul
+                  aria-labelledby={`hd-group-${index}`}
+                  className="mt-2 divide-y divide-hairline border-y border-hairline"
+                >
+                  {group.units.map((unit) => (
+                    <li
+                      key={unit.name}
+                      className="flex items-baseline justify-between gap-4 py-3 text-[1.0625rem] font-medium tracking-tight"
+                    >
+                      <span>{unit.name}</span>
+                      {unit.mark !== undefined && (
+                        <span className="tabular-nums text-ink-muted">
+                          <span className="sr-only">, mark </span>
+                          {unit.mark}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
           <p className="mt-4 text-[0.9375rem] text-ink-muted">
-            Industry Capstone and Software Security are in progress.
+            Industry Capstone and Applied Econometrics are in progress.
           </p>
         </div>
 
@@ -61,7 +82,7 @@ export function Credentials() {
               Microsoft Certified: Azure Data Fundamentals
             </span>
             <span className="mt-1 block text-sm text-ink-muted">
-              DP-900, now being applied in the ProBudget move to Azure
+              DP-900, put to work moving ProBudget to Azure SQL Database
             </span>
           </p>
         </div>

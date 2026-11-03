@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { evidence, skillEvidence, skills } from "../../src/content/site";
+import { evidence, skillEvidence, skills, workingKnowledge } from "../../src/content/site";
 
 // Things CLAUDE.md says must never be on the page: phone numbers, the city, retail roles and a
 // student ID. The patterns are generic on purpose, so this public repo never spells the real
@@ -58,7 +58,7 @@ test("puts the facts a recruiter scans for just under the hero", async ({ page }
 test("says what each project did without opening a sheet", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.locator("#probudget").getByText("The database is moving to Azure, where"),
+    page.locator("#probudget").getByText("I moved its database from PostgreSQL to Azure SQL Database"),
   ).toBeVisible();
   await expect(
     page.locator("#mymichlin").getByText("Custom map annotations, built with async Swift."),
@@ -78,6 +78,74 @@ test("claims only what it can back up", async ({ page }) => {
   await expect(body).not.toContainText("100% precision");
   // The time-limited wording goes stale the week he graduates.
   await expect(body).not.toContainText(/graduating November 2026|final-year/i);
+});
+
+// The résumé PDF and the academic record are what a recruiter checks the page against.
+test.describe("agrees with the résumé and the academic record", () => {
+  test("names each High Distinction unit as the record does, with the marks the résumé gives", async ({ page }) => {
+    await page.goto("/");
+    const education = page.locator("#education");
+    const units = {
+      "iOS App Development": 95,
+      "Industry Placement": 89,
+      "Software Security": 84,
+      "Mobile Application Development": undefined,
+      "Web Database Interface": undefined,
+      "Programming Fundamentals in Java": undefined,
+      "Data Analysis in Business": 91,
+      "Introductory Econometrics": 90,
+      "Predictive Analytics and Machine Learning": undefined,
+      "Business Forecasting": undefined,
+      "Data Visualisation and Analytics": undefined,
+      "Statistical Foundations of Business Analytics": undefined,
+    };
+    for (const [name, mark] of Object.entries(units)) {
+      const row = education.getByRole("listitem").filter({ hasText: name });
+      await expect(row, name).toHaveCount(1);
+      if (mark !== undefined) await expect(row, `${name} mark`).toContainText(String(mark));
+    }
+    // Titles the page used before the record was checked.
+    for (const retired of ["Object-Oriented Programming", "iOS Development", "Web Database Interfaces"]) {
+      await expect(education.getByText(retired, { exact: true }), retired).toHaveCount(0);
+    }
+  });
+
+  test("does not list a unit that is still in progress as a result", async ({ page }) => {
+    await page.goto("/");
+    const education = page.locator("#education");
+    await expect(education).toContainText("Industry Capstone and Applied Econometrics are in progress");
+    // Both finish in November. Move them into the High Distinction groups once their results are in.
+    const results = education.getByRole("list", { name: /Software and IT|Data and analytics/ });
+    await expect(results).toHaveCount(2);
+    await expect(results.getByText("Applied Econometrics")).toHaveCount(0);
+    await expect(results.getByText(/Capstone|Studio Project 2/)).toHaveCount(0);
+  });
+
+  test("separates working knowledge from the rest of the skills, as the résumé does", async ({ page }) => {
+    await page.goto("/");
+    const working = page.getByRole("list", { name: "Working knowledge" }).locator(".skill");
+    // The first text node is the skill itself; the rest is the dots and the spoken evidence.
+    const names = await working.evaluateAll((items) =>
+      items.map((item) => item.childNodes[0]?.textContent?.trim() ?? ""),
+    );
+    expect(names.sort()).toEqual([...workingKnowledge].sort());
+    await expect(working.filter({ hasText: "TypeScript" })).toHaveCount(0);
+  });
+
+  test("says ProBudget runs on Azure SQL Database, not that it is about to", async ({ page }) => {
+    await page.goto("/");
+    const body = page.locator("body");
+    await expect(page.locator("#probudget")).toContainText("Azure SQL Database");
+    await expect(body).not.toContainText(/moving to (Microsoft )?Azure/i);
+    await expect(body).not.toContainText("Neon");
+  });
+
+  test("names the same secondary targets as the résumé header", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#contact")).toContainText("software engineering");
+    await expect(page.locator("#contact")).toContainText("Data and analytics");
+    await expect(page.locator("#contact")).toContainText("solution delivery");
+  });
 });
 
 test("shows the matching flow in order", async ({ page }) => {
