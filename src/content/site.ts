@@ -79,9 +79,9 @@ export const matchingFlow = [
   { label: "Review", text: "Human review for the final merge decision" },
 ] as const;
 
-// The High Distinction units, under the titles on the Monash academic record. A mark is shown
-// where the résumé gives one. A unit whose result is not confirmed yet is left out, so the page
-// never claims a result it cannot back up.
+// The High Distinction units the résumé lists, under the titles on the Monash academic record, with
+// the marks the résumé gives and the highest first. A unit still in progress is left out, so the
+// page never claims a result it cannot back up.
 export const highDistinction: readonly {
   label: string;
   units: readonly { name: string; mark?: number }[];
@@ -90,6 +90,8 @@ export const highDistinction: readonly {
     label: "Software and IT",
     units: [
       { name: "iOS App Development", mark: 95 },
+      { name: "Industry Placement", mark: 89 },
+      { name: "Software Security", mark: 84 },
       { name: "Mobile Application Development" },
       { name: "Web Database Interface" },
       { name: "Programming Fundamentals in Java" },
@@ -98,10 +100,12 @@ export const highDistinction: readonly {
   {
     label: "Data and analytics",
     units: [
-      { name: "Introductory Econometrics", mark: 90 },
       { name: "Data Analysis in Business", mark: 91 },
-      { name: "Statistical Foundations of Business Analytics" },
+      { name: "Introductory Econometrics", mark: 90 },
+      { name: "Predictive Analytics and Machine Learning" },
+      { name: "Business Forecasting" },
       { name: "Data Visualisation and Analytics" },
+      { name: "Statistical Foundations of Business Analytics" },
     ],
   },
 ];

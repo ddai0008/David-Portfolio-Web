@@ -87,13 +87,17 @@ test.describe("agrees with the résumé and the academic record", () => {
     const education = page.locator("#education");
     const units = {
       "iOS App Development": 95,
+      "Industry Placement": 89,
+      "Software Security": 84,
       "Mobile Application Development": undefined,
       "Web Database Interface": undefined,
       "Programming Fundamentals in Java": undefined,
-      "Introductory Econometrics": 90,
       "Data Analysis in Business": 91,
-      "Statistical Foundations of Business Analytics": undefined,
+      "Introductory Econometrics": 90,
+      "Predictive Analytics and Machine Learning": undefined,
+      "Business Forecasting": undefined,
       "Data Visualisation and Analytics": undefined,
+      "Statistical Foundations of Business Analytics": undefined,
     };
     for (const [name, mark] of Object.entries(units)) {
       const row = education.getByRole("listitem").filter({ hasText: name });
@@ -106,20 +110,15 @@ test.describe("agrees with the résumé and the academic record", () => {
     }
   });
 
-  test("claims no result that is not confirmed yet", async ({ page }) => {
+  test("does not list a unit that is still in progress as a result", async ({ page }) => {
     await page.goto("/");
     const education = page.locator("#education");
     await expect(education).toContainText("Industry Capstone and Applied Econometrics are in progress");
-    // The page names a unit only once its result is confirmed. Take a name off this list when that
-    // happens, and add the unit to the High Distinction groups.
-    for (const unit of [
-      "Software Security",
-      "Industry Placement",
-      "Business Forecasting",
-      "Predictive Analytics and Machine Learning",
-    ]) {
-      await expect(education, unit).not.toContainText(unit);
-    }
+    // Both finish in November. Move them into the High Distinction groups once their results are in.
+    const results = education.getByRole("list", { name: /Software and IT|Data and analytics/ });
+    await expect(results).toHaveCount(2);
+    await expect(results.getByText("Applied Econometrics")).toHaveCount(0);
+    await expect(results.getByText(/Capstone|Studio Project 2/)).toHaveCount(0);
   });
 
   test("separates working knowledge from the rest of the skills, as the résumé does", async ({ page }) => {
