@@ -71,7 +71,7 @@ export function Hero() {
           <nav
             aria-label="Selected work"
             className="hero-in mt-12 md:mt-[clamp(1.5rem,6svh,5rem)]"
-            style={vars({ "--i": 7 })}
+            style={vars({ "--i": 6 })}
           >
             {/* A lead-in on the same line as the links, not a capitals label above them. The links
                 are 15px and grey like the bar's, since they are a second way in, not the first. On
