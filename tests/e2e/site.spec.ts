@@ -406,6 +406,21 @@ test.describe("navigation", () => {
     }
   });
 
+  test("fits the five section links between the name and the buttons at 768px", async ({ page }) => {
+    // 768px is the narrowest window that shows the links; below it they collapse into the menu.
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto("/");
+    const gaps = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const links = box('nav[aria-label="Sections"] ul');
+      const name = box(".nav a[href='#top']");
+      const resume = box(".nav a[download]");
+      return { afterName: links.left - name.right, beforeResume: resume.left - links.right };
+    });
+    expect(gaps.afterName, "space between the name and the links").toBeGreaterThanOrEqual(16);
+    expect(gaps.beforeResume, "space between the links and the Résumé button").toBeGreaterThanOrEqual(16);
+  });
+
   test("marks the section being read", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === "mobile", "the bar collapses to the name and résumé");
     await page.goto("/");
@@ -1167,18 +1182,37 @@ test.describe("type and hierarchy", () => {
     expect(offset).toBeLessThan(2);
   });
 
-  test("keeps the hero laptop's base inside its column below the desktop breakpoint", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "mobile", "the base overhangs the lid on desktop, as a real one does");
+  // The base overhangs the lid on a desktop, as a real one does. Below lg the column is narrow enough
+  // that the overhang would reach the gutter, so the two line up: on a phone, and at 820px, where the
+  // overhang came within 8px of the window edge.
+  for (const [width, height] of [
+    [390, 844],
+    [820, 1180],
+    [1023, 900],
+  ]) {
+    test(`keeps the hero laptop's base inside its column at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto("/");
+      const [frame, base] = await Promise.all(
+        [".laptop-frame", ".laptop-base"].map((selector) =>
+          page.locator(`#top ${selector}`).evaluate((node) => {
+            const box = node.getBoundingClientRect();
+            return { left: box.left, right: box.right };
+          }),
+        ),
+      );
+      expect(Math.abs(base.left - frame.left)).toBeLessThan(1);
+      expect(Math.abs(base.right - frame.right)).toBeLessThan(1);
+    });
+  }
+
+  test("lets the base overhang the lid on a desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
-    const [frame, base] = await Promise.all(
-      [".laptop-frame", ".laptop-base"].map((selector) =>
-        page.locator(`#top ${selector}`).evaluate((node) => {
-          const box = node.getBoundingClientRect();
-          return { left: box.left, right: box.right };
-        }),
-      ),
-    );
-    expect(Math.abs(base.left - frame.left)).toBeLessThan(1);
-    expect(Math.abs(base.right - frame.right)).toBeLessThan(1);
+    const widths = await page.evaluate(() => ({
+      frame: document.querySelector("#top .laptop-frame")!.getBoundingClientRect().width,
+      base: document.querySelector("#top .laptop-base")!.getBoundingClientRect().width,
+    }));
+    expect(widths.base).toBeGreaterThan(widths.frame);
   });
 });
