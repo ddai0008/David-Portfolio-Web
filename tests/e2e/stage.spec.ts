@@ -233,6 +233,42 @@ test("never prints two projects' words over each other while the stage swaps", a
   expect(mostVisible).toBe(1);
 });
 
+test("fits each project's words between the bar and the progress dots on a 600px-tall window", async ({ page }) => {
+  test.setTimeout(120_000);
+  // A 1366x768 laptop with a taskbar and a bookmarks bar leaves about this much window. The words are
+  // centred on the pinned screen, so a panel taller than the space between the bar and the dots
+  // slides under one of them.
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await waitForStage(page);
+  for (const [id, title] of [
+    ["probudget", "ProBudget"],
+    ["mymichlin", "MyMichlin"],
+    ["nutritrack", "NutriTrack"],
+  ]) {
+    await jumpTo(page, id);
+    await expect(activeTitle(page)).toHaveText(title);
+    // Wait for the cross-fade and its slide to finish, so the box is where it rests.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const style = getComputedStyle(document.querySelector('#work article[data-active="true"]')!);
+          return style.opacity === "1" && style.transform === "none";
+        }),
+      )
+      .toBe(true);
+    const room = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const panel = box('#work article[data-active="true"]');
+      return {
+        aboveBar: panel.top - box(".nav").bottom,
+        aboveDots: box('nav[aria-label="Projects"]').top - panel.bottom,
+      };
+    });
+    expect(room.aboveBar, `${title} clears the bar`).toBeGreaterThanOrEqual(0);
+    expect(room.aboveDots, `${title} clears the progress dots`).toBeGreaterThanOrEqual(0);
+  }
+});
+
 test("has no accessibility violations on the stage", async ({ page }) => {
   test.setTimeout(120_000);
   await waitForStage(page);

@@ -22,6 +22,7 @@ export type Hue = "agencia" | "probudget" | "mymichlin" | "nutritrack";
 export const navLinks = [
   { href: "#leadership", label: "Leadership" },
   { href: "#work", label: "Work" },
+  { href: "#education", label: "Education" },
   { href: "#about", label: "About" },
   { href: "#contact", label: "Contact" },
 ] as const;

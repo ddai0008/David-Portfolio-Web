@@ -33,11 +33,12 @@ function Copy({
       <h3 id={`${id}-title`} className="headline mt-4">
         {title}
       </h3>
-      <p className="lede mt-5">{summary}</p>
-      {/* What the details sheet holds that matters most, so a skimmer need not open it. */}
-      <ul className="mt-6 space-y-2.5">
+      <p className="lede mt-4">{summary}</p>
+      {/* What the details sheet holds that matters most, so a skimmer need not open it. The gaps are
+          tight enough that the whole panel fits a 600px-tall window beside the pinned stage. */}
+      <ul className="mt-5 space-y-2.5">
         {highlights.map((line) => (
-          <li key={line} className="flex gap-3 text-[1.0625rem] leading-snug text-ink-muted">
+          <li key={line} className="flex gap-3 text-[1.0625rem] leading-normal">
             <span
               className="mt-[0.55em] size-1.5 shrink-0 rounded-full bg-ink-muted"
               aria-hidden="true"
@@ -46,7 +47,7 @@ function Copy({
           </li>
         ))}
       </ul>
-      <ul className="mt-6 flex flex-wrap gap-2" aria-label="Built with">
+      <ul className="mt-5 flex flex-wrap gap-2" aria-label="Built with">
         {chips.map((chip) => (
           <li key={chip} className="chip">
             {chip}
@@ -132,7 +133,6 @@ export function Work() {
                 A live application where people manage recurring subscriptions and visualise
                 budget trends, in a responsive dark-mode interface.
               </Fact>
-              <Fact>I architected, built and deployed it.</Fact>
             </SheetSection>
             <SheetSection title="Decisions">
               <Fact>
@@ -356,7 +356,9 @@ export function Work() {
     <section id="work" aria-labelledby="work-title" className="py-12 md:py-20">
       <div className="wrap reveal">
         <p className="eyebrow">Selected work</p>
-        <h2 id="work-title" className="headline mt-5 max-w-3xl">
+        {/* The section's heading is a step down so that each project's name, which is what the section
+            is about, is the biggest type in it. */}
+        <h2 id="work-title" className="title mt-5 max-w-3xl">
           Built end to end, then shipped.
         </h2>
       </div>

@@ -46,7 +46,7 @@ export function Skills() {
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Skills</p>
-          <h2 className="headline mt-5 max-w-4xl">From the database to the stakeholder demo.</h2>
+          <h2 className="title mt-5 max-w-4xl">From the database to the stakeholder demo.</h2>
         </div>
 
         <div className="skills-explorer">
@@ -88,24 +88,19 @@ export function Skills() {
             ))}
           </div>
 
-          <ul className="group/skills mt-8 md:mt-12">
+          <ul className="mt-8 md:mt-12">
             {skills.map((group, index) => {
               // The résumé separates what is known well from "working knowledge", so the page does.
               const known = group.items.filter((name) => !workingKnowledge.includes(name));
               const partial = group.items.filter((name) => workingKnowledge.includes(name));
               return (
-                // The dimming lives on the <li> and the entrance animation on its child: an animation
-                // holds opacity at 1 and would override the hover state if they shared an element.
-                <li
-                  key={group.label}
-                  className="border-t border-hairline transition-opacity duration-300 last:border-b group-hover/skills:opacity-45 hover:opacity-100!"
-                >
+                <li key={group.label} className="border-t border-hairline last:border-b">
                   <div className="reveal-soft grid gap-3 py-8 md:grid-cols-12 md:gap-10 md:py-10">
                     <h3 className="title md:col-span-4">{group.label}</h3>
                     <div className="md:col-span-8">
                       <ul
                         role="list"
-                        className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.125rem,2.2vw,1.5rem)] leading-snug tracking-[-0.015em]"
+                        className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.1875rem,2vw,1.5rem)] leading-[1.4] tracking-[-0.015em]"
                       >
                         {known.map(skill)}
                       </ul>
@@ -117,7 +112,7 @@ export function Skills() {
                           <ul
                             role="list"
                             aria-labelledby={`working-knowledge-${index}`}
-                            className="flex flex-wrap gap-x-[1.1em] gap-y-1 text-[clamp(1rem,1.8vw,1.25rem)] leading-snug tracking-[-0.015em]"
+                            className="flex flex-wrap gap-x-[1.1em] gap-y-1 text-[1.0625rem] leading-normal tracking-[-0.015em]"
                           >
                             {partial.map(skill)}
                           </ul>

@@ -401,9 +401,24 @@ test.describe("navigation", () => {
     test.skip(testInfo.project.name === "mobile", "the bar collapses to the name and résumé");
     await page.goto("/");
     const bar = page.getByRole("navigation", { name: "Sections" });
-    for (const label of ["Leadership", "Work", "About", "Contact"]) {
+    for (const label of ["Leadership", "Work", "Education", "About", "Contact"]) {
       await expect(bar.getByRole("link", { name: label })).toBeVisible();
     }
+  });
+
+  test("fits the five section links between the name and the buttons at 768px", async ({ page }) => {
+    // 768px is the narrowest window that shows the links; below it they collapse into the menu.
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto("/");
+    const gaps = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const links = box('nav[aria-label="Sections"] ul');
+      const name = box(".nav a[href='#top']");
+      const resume = box(".nav a[download]");
+      return { afterName: links.left - name.right, beforeResume: resume.left - links.right };
+    });
+    expect(gaps.afterName, "space between the name and the links").toBeGreaterThanOrEqual(16);
+    expect(gaps.beforeResume, "space between the links and the Résumé button").toBeGreaterThanOrEqual(16);
   });
 
   test("marks the section being read", async ({ page }, testInfo) => {
@@ -422,6 +437,13 @@ test.describe("navigation", () => {
       "location",
     );
     await expect(bar.locator("[aria-current]")).toHaveCount(1);
+
+    // The degree and the GPA are what a graduate recruiter looks for, so Education is in the bar.
+    await jump("education");
+    await expect(bar.getByRole("link", { name: "Education" })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
 
     // Skills is not in the bar, so nothing claims to be current there.
     await jump("skills");
@@ -1011,5 +1033,203 @@ test.describe("high-contrast mode", () => {
     expect(seen.pills[0]).not.toBe(seen.pills[1]);
     expect(new Set(seen.pills.slice(1)).size).toBe(1);
     expect(seen.underlined).toBe(0);
+  });
+});
+
+test.describe("type and hierarchy", () => {
+  // Reads the colour a token resolves to, so the tests follow the palette rather than a hex code.
+  const tokens = (page: Page) =>
+    page.evaluate(() => {
+      const resolve = (token: string) => {
+        const probe = document.createElement("i");
+        probe.style.color = `var(${token})`;
+        document.body.append(probe);
+        const value = getComputedStyle(probe).color;
+        probe.remove();
+        return value;
+      };
+      return { ink: resolve("--ink"), muted: resolve("--ink-muted") };
+    });
+
+  test("sets the claim, the capstone and the skills in ink, and grey only for what supports them", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const { ink, muted } = await tokens(page);
+    const colour = (selector: string) =>
+      page.locator(selector).first().evaluate((node) => getComputedStyle(node).color);
+
+    // The tagline is the claim the page backs up; the line under it is support.
+    expect(await colour("#top h1 + p")).toBe(ink);
+    expect(await colour("#top .lede")).toBe(muted);
+    expect(await colour("#leadership h3 + p")).toBe(ink);
+    expect(await colour("#impact dd")).toBe(ink);
+    expect(await colour("#skills .skill")).toBe(ink);
+    // The résumé's "working knowledge" is a lesser claim, so it stays grey.
+    const working = page.getByRole("list", { name: "Working knowledge" }).first().locator(".skill").first();
+    expect(await working.evaluate((node) => getComputedStyle(node).color)).toBe(muted);
+  });
+
+  test("keeps grey to under half of the text on the page", async ({ page }) => {
+    await page.goto("/");
+    const { muted } = await tokens(page);
+    const share = await page.evaluate((grey) => {
+      let total = 0;
+      let greyChars = 0;
+      const walker = document.createTreeWalker(document.querySelector("#main")!, NodeFilter.SHOW_ELEMENT);
+      for (let node = walker.currentNode; node; node = walker.nextNode() as Node) {
+        if (!(node instanceof HTMLElement)) continue;
+        if (node.closest("[aria-hidden='true'], dialog, .sr-only")) continue;
+        const own = [...node.childNodes]
+          .filter((child) => child.nodeType === 3)
+          .map((child) => child.textContent?.trim() ?? "")
+          .join(" ")
+          .trim();
+        if (!own) continue;
+        total += own.length;
+        if (getComputedStyle(node).color === grey) greyChars += own.length;
+      }
+      return greyChars / total;
+    }, muted);
+    // A deliberate ceiling, not a snapshot: it was 78% before the claims and the skills moved to ink and
+    // is about 42% now. If new copy pushes it over, set the claim in ink rather than raising this.
+    expect(share).toBeLessThan(0.5);
+  });
+
+  test("a chosen project steps the skills it does not use back to grey", async ({ page }) => {
+    await page.goto("/");
+    const { ink, muted } = await tokens(page);
+    const colour = (name: string) =>
+      page.locator(".skill", { hasText: name }).first().evaluate((node) => getComputedStyle(node).color);
+
+    expect(await colour("PHP")).toBe(ink);
+    await page.locator("label.skill-pill", { hasText: "ProBudget" }).click();
+    // TypeScript is used by ProBudget and PHP is not.
+    expect(await colour("TypeScript")).toBe(ink);
+    expect(await colour("PHP")).toBe(muted);
+    // Working knowledge that the project uses comes up to ink; it is not stuck grey.
+    await page.locator("label.skill-pill", { hasText: "NutriTrack" }).click();
+    expect(await colour("Kotlin")).toBe(ink);
+    await page.locator("label.skill-pill", { hasText: "None" }).click();
+    expect(await colour("PHP")).toBe(ink);
+  });
+
+  test("does not dim the other skill rows when one is hovered", async ({ page }) => {
+    await page.goto("/");
+    const rows = page.locator("#skills .skills-explorer > ul > li");
+    await rows.first().hover();
+    // Dimmed muted text fell to 1.9:1, well under the 4.5:1 that text needs.
+    expect(await rows.nth(2).evaluate((node) => getComputedStyle(node).opacity)).toBe("1");
+  });
+
+  test("sets every line in one of four weights", async ({ page }) => {
+    await page.goto("/");
+    const stray = await page.evaluate(() => {
+      const found = new Set<string>();
+      for (const node of document.querySelectorAll<HTMLElement>("header *, main *, footer *")) {
+        const own = [...node.childNodes].some((child) => child.nodeType === 3 && child.textContent?.trim());
+        if (!own) continue;
+        const weight = Number(getComputedStyle(node).fontWeight);
+        if (![400, 500, 600, 700].includes(weight)) {
+          found.add(`${weight}: ${node.textContent?.trim().slice(0, 24)}`);
+        }
+      }
+      return [...found];
+    });
+    expect(stray).toEqual([]);
+  });
+
+  test("adds word-spacing back to the large type that tight tracking would close up", async ({ page }) => {
+    await page.goto("/");
+    for (const selector of ["#top h1", "#leadership h2", "#impact h2", "#education h2", "#contact h2"]) {
+      const spacing = await page
+        .locator(selector)
+        .first()
+        .evaluate((node) => parseFloat(getComputedStyle(node).wordSpacing));
+      expect(spacing, `${selector} word-spacing`).toBeGreaterThan(0);
+    }
+  });
+
+  test("sizes headings by importance", async ({ page }) => {
+    await page.goto("/");
+    const size = (selector: string) =>
+      page.locator(selector).first().evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
+
+    // In Work the projects are the point, so a project's name is bigger than the section's heading.
+    expect(await size("#probudget-title")).toBeGreaterThan(await size("#work-title"));
+    // The capstone and the results lead; the quieter sections are a step down from them.
+    expect(await size("#leadership h2")).toBeGreaterThan(await size("#education h2"));
+    expect(await size("#leadership h2")).toBeGreaterThan(await size("#skills h2"));
+    expect(await size("#leadership h2")).toBeGreaterThan(await size("#about h2"));
+    // The name stays the biggest type on the page.
+    expect(await size("#top h1")).toBeGreaterThan(await size("#contact h2"));
+  });
+
+  test("lines the GPA up with the certificate under it, on wide screens", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "the two stack on a phone");
+    await page.goto("/");
+    const left = (selector: string) =>
+      page.locator(selector).first().evaluate((node) => node.getBoundingClientRect().left);
+    expect(Math.abs((await left("#education .stat-sm")) - (await left("#education .rounded-3xl")))).toBeLessThan(1);
+  });
+
+  for (const width of [1024, 1440]) {
+    test(`puts the footer links on the centre line at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const offset = await page.locator("footer ul").first().evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        return Math.abs(box.left + box.width / 2 - document.documentElement.clientWidth / 2);
+      });
+      expect(offset).toBeLessThan(2);
+    });
+  }
+
+  for (const width of [768, 1024, 1440]) {
+    test(`keeps the footer credits on one line at ${width}px`, async ({ page }) => {
+      // The pause button is only there when motion is allowed, and it is what makes the group widest.
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      const credits = page.locator("footer p", { hasText: "Built with" });
+      await expect(page.getByRole("button", { name: /background motion/ })).toBeVisible();
+      const height = await credits.evaluate((node) => node.getBoundingClientRect().height);
+      // One 15px line is about 23px tall; two would be 45px.
+      expect(height).toBeLessThan(30);
+    });
+  }
+
+  // The base overhangs the lid on a desktop, as a real one does. Below lg the column is narrow enough
+  // that the overhang would reach the gutter, so the two line up: on a phone, and at 820px, where the
+  // overhang came within 8px of the window edge.
+  for (const [width, height] of [
+    [390, 844],
+    [820, 1180],
+    [1023, 900],
+  ]) {
+    test(`keeps the hero laptop's base inside its column at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto("/");
+      const [frame, base] = await Promise.all(
+        [".laptop-frame", ".laptop-base"].map((selector) =>
+          page.locator(`#top ${selector}`).evaluate((node) => {
+            const box = node.getBoundingClientRect();
+            return { left: box.left, right: box.right };
+          }),
+        ),
+      );
+      expect(Math.abs(base.left - frame.left)).toBeLessThan(1);
+      expect(Math.abs(base.right - frame.right)).toBeLessThan(1);
+    });
+  }
+
+  test("lets the base overhang the lid on a desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const widths = await page.evaluate(() => ({
+      frame: document.querySelector("#top .laptop-frame")!.getBoundingClientRect().width,
+      base: document.querySelector("#top .laptop-base")!.getBoundingClientRect().width,
+    }));
+    expect(widths.base).toBeGreaterThan(widths.frame);
   });
 });
