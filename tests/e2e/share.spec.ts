@@ -111,3 +111,130 @@ test.describe("profile icons", () => {
     }
   });
 });
+
+// What a file preview, a browser tab and a recruiter's file manager read from the résumé PDF. They come
+// from the document's properties (the Info dictionary and the XMP packet), not from the pages, and
+// LibreOffice resets them to its defaults on every export. A PDF cannot carry a share image: that needs a
+// web page with og: tags, which is what the site's own card is.
+//
+// The properties were written as an incremental update, so the file still holds the old title earlier on.
+// A reader takes the last revision, and so do these helpers.
+function literal(buffer: Buffer, open: number) {
+  // A PDF string is "(...)" with backslash escapes and balanced inner brackets.
+  const bytes: number[] = [];
+  let depth = 1;
+  for (let i = open + 1; i < buffer.length; i++) {
+    const byte = buffer[i];
+    if (byte === 0x5c) {
+      const next = buffer[++i];
+      const octal = String.fromCharCode(next).match(/[0-7]/);
+      if (octal) {
+        let digits = String.fromCharCode(next);
+        while (digits.length < 3 && /[0-7]/.test(String.fromCharCode(buffer[i + 1]))) digits += String.fromCharCode(buffer[++i]);
+        bytes.push(parseInt(digits, 8) & 0xff);
+      } else if (next === 0x6e) bytes.push(10);
+      else if (next === 0x72) bytes.push(13);
+      else if (next === 0x74) bytes.push(9);
+      else if (next !== 0x0a && next !== 0x0d) bytes.push(next);
+      continue;
+    }
+    if (byte === 0x28) depth++;
+    if (byte === 0x29 && --depth === 0) break;
+    bytes.push(byte);
+  }
+  const raw = Buffer.from(bytes);
+  // UTF-16 with a byte-order mark, or PDFDocEncoding: Latin-1 with a few marks in 0x80 to 0x90.
+  if (raw[0] === 0xfe && raw[1] === 0xff) {
+    return Buffer.from(raw.subarray(2)).swap16().toString("utf16le");
+  }
+  const marks: Record<number, string> = { 0x80: "•", 0x83: "…", 0x84: "—", 0x85: "–", 0x8d: "“", 0x8e: "”", 0x8f: "‘", 0x90: "’" };
+  return [...raw].map((byte) => marks[byte] ?? String.fromCharCode(byte)).join("");
+}
+
+async function readPdfProperties() {
+  const buffer = await readFile("public/David_Dai_Resume.pdf");
+  const text = buffer.toString("latin1"); // one character per byte, so a text index is a buffer index
+  const infoNumber = [...text.matchAll(/\/Info\s+(\d+)\s+0\s+R/g)].at(-1)?.[1];
+  expect(infoNumber, "the PDF names an Info dictionary").toBeTruthy();
+  const start = text.lastIndexOf(`${infoNumber} 0 obj`);
+  const info = text.slice(start, text.indexOf("endobj", start));
+  const field = (key: string) => {
+    const at = info.search(new RegExp(`/${key}\\s*\\(`));
+    if (at < 0) return undefined;
+    return literal(buffer, start + info.indexOf("(", at));
+  };
+  // The XMP packet is UTF-8, so it is decoded from its bytes, not from the one-character-per-byte text.
+  const packet = [...text.matchAll(/<\?xpacket begin[\s\S]*?<\?xpacket end[^>]*\?>/g)].at(-1);
+  const xmp = packet ? buffer.subarray(packet.index, packet.index! + packet[0].length).toString("utf8") : "";
+  const unescape = (value: string) =>
+    value.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+  const alt = (tag: string) =>
+    unescape(xmp.match(new RegExp(`<dc:${tag}>[\\s\\S]*?<rdf:li[^>]*>([\\s\\S]*?)</rdf:li>`))?.[1] ?? "");
+  const lang = [...text.matchAll(/\/Lang\s*\(/g)].at(-1);
+  return {
+    info: { title: field("Title"), author: field("Author"), subject: field("Subject"), keywords: field("Keywords") },
+    xmp: {
+      title: alt("title"),
+      description: alt("description"),
+      keywords: unescape(xmp.match(/<pdf:Keywords>([\s\S]*?)<\/pdf:Keywords>/)?.[1] ?? ""),
+      subjects: [...(xmp.match(/<dc:subject>[\s\S]*?<\/dc:subject>/)?.[0].matchAll(/<rdf:li>([\s\S]*?)<\/rdf:li>/g) ?? [])].map(
+        (match) => unescape(match[1]),
+      ),
+    },
+    language: lang ? literal(buffer, lang.index! + lang[0].length - 1) : undefined,
+  };
+}
+
+test.describe("résumé PDF properties", () => {
+  test("has a title that names him and the document, with the accent, short enough not to be cut", async () => {
+    const { info, xmp } = await readPdfProperties();
+    for (const title of [info.title, xmp.title]) {
+      expect(title).toMatch(/^David Dai — /);
+      // "Resume" without its accents was what the export said before.
+      expect(title).toMatch(/Résumé/);
+      expect(title!.length).toBeLessThanOrEqual(70);
+    }
+    expect(info.author).toBe("David Dai");
+  });
+
+  test("has a description that reads as a sentence, not as the page's header line", async () => {
+    const { info, xmp } = await readPdfProperties();
+    for (const description of [info.subject!, xmp.description]) {
+      // A link preview shows about this much: enough to say something, not so much it is cut mid-word.
+      expect(description.length).toBeGreaterThanOrEqual(80);
+      expect(description.length).toBeLessThanOrEqual(180);
+      // The export had "Graduate  —  Software Engineering | Data & Analytics | Solution Delivery".
+      expect(description).not.toMatch(/ {2}/);
+      expect(description).not.toMatch(/\|/);
+      expect(description).toMatch(/\.$/);
+      // Dates stay current: when the start date moves, this fails until the description follows.
+      expect(description).toMatch(/available from December 2026/i);
+      expect(description).toMatch(/Monash/);
+    }
+  });
+
+  test("says the same thing in the Info dictionary and in the XMP packet", async () => {
+    const { info, xmp } = await readPdfProperties();
+    expect(info.title).toBe(xmp.title);
+    expect(info.subject).toBe(xmp.description);
+    expect(info.keywords).toBe(xmp.keywords);
+  });
+
+  test("lists keywords, and is marked as Australian English", async () => {
+    const { info, xmp, language } = await readPdfProperties();
+    const keywords = info.keywords!.split(", ");
+    expect(keywords.length).toBeGreaterThanOrEqual(5);
+    expect(xmp.subjects).toEqual(keywords);
+    expect(language).toBe("en-AU");
+  });
+
+  test("keeps the phone number, the city and the retail roles out of every property", async () => {
+    const { info, xmp } = await readPdfProperties();
+    // The PDF's pages may carry some of these, which David is fine with; its properties, which a preview
+    // and a search index copy around, do not. Generic patterns, so this public file never spells them out.
+    const everything = [...Object.values(info), ...Object.values(xmp).flat()].join("\n");
+    for (const pattern of [/\b0[2-478](?:[\s-]?\d){8}\b/, /\+?61[\s-]?\d{9}\b/, /\b\d{8}\b/, /Melbourne|Vodafone|McDonald/i]) {
+      expect(everything).not.toMatch(pattern);
+    }
+  });
+});
