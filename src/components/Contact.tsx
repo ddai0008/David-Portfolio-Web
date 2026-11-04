@@ -18,15 +18,15 @@ export function Contact() {
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Contact · Available from December 2026</p>
-          <h2 className="display mt-5">Let’s talk.</h2>
+          <h2 className="display-sm mt-5">Let’s talk.</h2>
           <p className="lede mt-6 max-w-xl">
-            Looking for a graduate software engineering role. Solution delivery and business
-            analysis fit too.
+            Looking for a graduate software engineering role. Data and analytics, and solution
+            delivery, fit too.
           </p>
 
           <a
             href={`mailto:${person.email}`}
-            className="hit mt-10 inline-block text-[clamp(1.25rem,4.4vw,2.75rem)] font-semibold tracking-[-0.022em] break-all text-ink underline decoration-hairline decoration-2 underline-offset-8 transition-colors hover:decoration-ink"
+            className="hit mt-10 inline-block text-[clamp(1.25rem,4.4vw,2.75rem)] font-semibold tracking-[-0.022em] break-all text-ink underline decoration-link decoration-2 underline-offset-8 transition-colors hover:text-link"
           >
             {person.email}
           </a>

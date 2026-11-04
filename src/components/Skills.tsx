@@ -1,4 +1,4 @@
-import { evidence, skillEvidence, skills } from "@/content/site";
+import { evidence, skillEvidence, skills, workingKnowledge } from "@/content/site";
 import { vars } from "./css";
 
 // Skills as typography: each group is a large label with its tools set as plain words, not a
@@ -8,12 +8,45 @@ import { vars } from "./css";
 export function Skills() {
   const byId = Object.fromEntries(evidence.map((place) => [place.id, place]));
 
+  const skill = (name: string) => {
+    const places = skillEvidence[name] ?? [];
+    return (
+      <li
+        key={name}
+        className="skill whitespace-nowrap"
+        data-p={places.length ? places.join(" ") : undefined}
+      >
+        {name}
+        {places.length > 0 && (
+          <>
+            <span className="skill-dots" aria-hidden="true">
+              {places.map((id) => (
+                <span
+                  key={id}
+                  className="skill-dot"
+                  data-plain={byId[id].hue ? undefined : ""}
+                  style={vars({
+                    "--dot": byId[id].hue ? `var(--hue-${byId[id].hue})` : "transparent",
+                  })}
+                />
+              ))}
+            </span>
+            <span className="sr-only">
+              {" "}
+              ({places.map((id) => byId[id].label).join(", ")})
+            </span>
+          </>
+        )}
+      </li>
+    );
+  };
+
   return (
     <section id="skills" className="dots py-24 md:py-32">
       <div className="wrap">
         <div className="reveal">
           <p className="eyebrow">Skills</p>
-          <h2 className="headline mt-5 max-w-4xl">From the database to the stakeholder demo.</h2>
+          <h2 className="title mt-5 max-w-4xl">From the database to the stakeholder demo.</h2>
         </div>
 
         <div className="skills-explorer">
@@ -55,56 +88,41 @@ export function Skills() {
             ))}
           </div>
 
-          <ul className="group/skills mt-8 md:mt-12">
-            {skills.map((group) => (
-              // The dimming lives on the <li> and the entrance animation on its child: an animation
-              // holds opacity at 1 and would override the hover state if they shared an element.
-              <li
-                key={group.label}
-                className="border-t border-hairline transition-opacity duration-300 last:border-b group-hover/skills:opacity-45 hover:opacity-100!"
-              >
-                <div className="reveal-soft grid gap-3 py-8 md:grid-cols-12 md:gap-10 md:py-10">
-                  <h3 className="title md:col-span-4">{group.label}</h3>
-                  <ul
-                    role="list"
-                    className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.125rem,2.2vw,1.5rem)] leading-snug tracking-[-0.015em] md:col-span-8"
-                  >
-                    {group.items.map((item) => {
-                      const places = skillEvidence[item] ?? [];
-                      return (
-                        <li
-                          key={item}
-                          className="skill whitespace-nowrap"
-                          data-p={places.length ? places.join(" ") : undefined}
-                        >
-                          {item}
-                          {places.length > 0 && (
-                            <>
-                              <span className="skill-dots" aria-hidden="true">
-                                {places.map((id) => (
-                                  <span
-                                    key={id}
-                                    className="skill-dot"
-                                    data-plain={byId[id].hue ? undefined : ""}
-                                    style={vars({
-                                      "--dot": byId[id].hue ? `var(--hue-${byId[id].hue})` : "transparent",
-                                    })}
-                                  />
-                                ))}
-                              </span>
-                              <span className="sr-only">
-                                {" "}
-                                ({places.map((id) => byId[id].label).join(", ")})
-                              </span>
-                            </>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </li>
-            ))}
+          <ul className="mt-8 md:mt-12">
+            {skills.map((group, index) => {
+              // The résumé separates what is known well from "working knowledge", so the page does.
+              const known = group.items.filter((name) => !workingKnowledge.includes(name));
+              const partial = group.items.filter((name) => workingKnowledge.includes(name));
+              return (
+                <li key={group.label} className="border-t border-hairline last:border-b">
+                  <div className="reveal-soft grid gap-3 py-8 md:grid-cols-12 md:gap-10 md:py-10">
+                    <h3 className="title md:col-span-4">{group.label}</h3>
+                    <div className="md:col-span-8">
+                      <ul
+                        role="list"
+                        className="flex flex-wrap gap-x-[1.1em] gap-y-1.5 text-[clamp(1.1875rem,2vw,1.5rem)] leading-[1.4] tracking-[-0.015em]"
+                      >
+                        {known.map(skill)}
+                      </ul>
+                      {partial.length > 0 && (
+                        <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-ink-muted">
+                          <p id={`working-knowledge-${index}`} className="text-[0.9375rem]">
+                            Working knowledge
+                          </p>
+                          <ul
+                            role="list"
+                            aria-labelledby={`working-knowledge-${index}`}
+                            className="flex flex-wrap gap-x-[1.1em] gap-y-1 text-[1.0625rem] leading-normal tracking-[-0.015em]"
+                          >
+                            {partial.map(skill)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

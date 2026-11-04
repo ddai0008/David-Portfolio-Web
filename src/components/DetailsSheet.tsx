@@ -81,7 +81,7 @@ export function SheetSection({ title, children }: { title: string; children: Rea
   return (
     <section className="border-t border-hairline py-6 first:border-t-0 first:pt-0">
       <h4 className="eyebrow">{title}</h4>
-      <div className="mt-3 space-y-3 text-[1.0625rem] leading-relaxed">{children}</div>
+      <div className="mt-3 space-y-3 text-[1.0625rem] leading-normal">{children}</div>
     </section>
   );
 }

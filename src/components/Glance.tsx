@@ -10,7 +10,7 @@ export function Glance() {
             <dt className="text-[clamp(1.875rem,3.4vw,2.75rem)] leading-none font-bold tracking-[-0.03em]">
               {fact.figure}
             </dt>
-            <dd className="mt-2.5 max-w-[16rem] text-[0.9375rem] leading-snug text-ink-muted">
+            <dd className="mt-2.5 max-w-[16rem] text-[0.9375rem] leading-normal text-ink-muted">
               {fact.caption}
             </dd>
           </div>

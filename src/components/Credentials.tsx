@@ -1,42 +1,62 @@
 import { academics, highDistinction } from "@/content/site";
 
-const figure =
-  "block text-[clamp(3.5rem,11vw,5.75rem)] leading-none font-bold tracking-[-0.04em] tabular-nums";
-
 export function Credentials() {
   return (
     <section id="education" className="dots bg-paper-alt py-24 md:py-32">
       <div className="wrap grid gap-x-10 gap-y-12 md:grid-cols-12 md:gap-y-20">
         <div className="reveal md:col-span-7">
           <p className="eyebrow">Monash University · Bachelor of IT and Business · 2026</p>
-          <h2 className="headline mt-5 max-w-4xl">Double degree, finishing strong.</h2>
+          <h2 className="title mt-5 max-w-4xl">Double degree, finishing strong.</h2>
           <p className="lede mt-6 max-w-2xl">
-            Majors in Software Development and Business Analytics.
+            Majors in Software Development and in Business Analytics and Statistics.
           </p>
         </div>
 
-        <div className="reveal flex flex-wrap items-end gap-x-12 gap-y-8 md:col-span-5 md:justify-end">
+        {/* Left-aligned, so the first figure and the certificate card below share one edge, and
+            sitting on the heading block's last line instead of floating beside its first. */}
+        <div className="reveal grid grid-cols-2 gap-x-8 md:col-span-5 md:self-end">
           <p>
-            <span className={figure}>{academics.gpa}</span>
+            <span className="stat-sm block">{academics.gpa}</span>
             <span className="mt-3 block text-[1.0625rem] text-ink-muted">GPA out of 4.0</span>
           </p>
           <p>
-            <span className={figure}>{academics.wam}</span>
+            <span className="stat-sm block">{academics.wam}</span>
             <span className="mt-3 block text-[1.0625rem] text-ink-muted">WAM, weighted average mark</span>
           </p>
         </div>
 
         <div className="reveal-soft md:col-span-7">
           <h3 className="eyebrow">High Distinction</h3>
-          <ul className="mt-4 divide-y divide-hairline border-y border-hairline">
-            {highDistinction.map((subject) => (
-              <li key={subject} className="py-3.5 text-lg font-medium tracking-tight">
-                {subject}
-              </li>
+          <div className="mt-4 grid gap-x-8 gap-y-8 sm:grid-cols-2">
+            {highDistinction.map((group, index) => (
+              <div key={group.label}>
+                <p id={`hd-group-${index}`} className="text-[1.0625rem] font-semibold tracking-tight">
+                  {group.label}
+                </p>
+                <ul
+                  aria-labelledby={`hd-group-${index}`}
+                  className="mt-2 divide-y divide-hairline border-y border-hairline"
+                >
+                  {group.units.map((unit) => (
+                    <li
+                      key={unit.name}
+                      className="flex items-baseline justify-between gap-4 py-3 text-[1.0625rem] tracking-tight"
+                    >
+                      <span>{unit.name}</span>
+                      {unit.mark !== undefined && (
+                        <span className="tabular-nums text-ink-muted">
+                          <span className="sr-only">, mark </span>
+                          {unit.mark}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
           <p className="mt-4 text-[0.9375rem] text-ink-muted">
-            Industry Capstone and Software Security are in progress.
+            Industry Capstone and Applied Econometrics are in progress.
           </p>
         </div>
 
@@ -57,11 +77,11 @@ export function Credentials() {
             <path d="m13.5 20.5 4.5 4.5 8.5-9.5" />
           </svg>
           <p>
-            <span className="block text-lg font-semibold tracking-tight">
+            <span className="block text-[1.0625rem] font-semibold tracking-tight">
               Microsoft Certified: Azure Data Fundamentals
             </span>
-            <span className="mt-1 block text-sm text-ink-muted">
-              DP-900, now being applied in the ProBudget move to Azure
+            <span className="mt-1 block text-[0.9375rem] text-ink-muted">
+              DP-900, put to work moving ProBudget to Azure SQL Database
             </span>
           </p>
         </div>

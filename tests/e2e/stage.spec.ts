@@ -174,6 +174,101 @@ test("pins a 3D stage that follows the scroll", async ({ page }) => {
   expect(problems).toEqual([]);
 });
 
+test("never prints two projects' words over each other while the stage swaps", async ({ page }) => {
+  test.setTimeout(120_000);
+  await waitForStage(page);
+  await jumpTo(page, "probudget");
+  await expect(activeTitle(page)).toHaveText("ProBudget");
+
+  // The three text panels share one spot, so two of them partly visible at once would overprint.
+  // First the rule that prevents it, read from the styles so it does not depend on frame timing:
+  // a panel that is leaving finishes fading before the one arriving begins.
+  const { leaving, arriving } = await page.evaluate(() => {
+    const ms = (value: string) => parseFloat(value) * (value.includes("ms") ? 1 : 1000);
+    const timing = (panel: Element | undefined) => {
+      const style = getComputedStyle(panel!);
+      return { duration: ms(style.transitionDuration), delay: ms(style.transitionDelay) };
+    };
+    const panels = [...document.querySelectorAll("#work .stage-panel")];
+    return {
+      leaving: timing(panels.find((panel) => panel.getAttribute("data-active") === "false")),
+      arriving: timing(panels.find((panel) => panel.getAttribute("data-active") === "true")),
+    };
+  });
+  expect(leaving.delay + leaving.duration, "the leaving panel is gone before the next appears").toBeLessThanOrEqual(
+    arriving.delay,
+  );
+
+  // Then the behaviour: sample every few milliseconds while the stage moves through the other two
+  // projects. A busy machine can make the sampling too sparse to catch an overlap, which is why the
+  // rule above is checked on its own.
+  const mostVisible = await page.evaluate(
+    (ids) =>
+      new Promise<number>((resolve) => {
+        const panels = [...document.querySelectorAll<HTMLElement>("#work .stage-panel")];
+        let most = 0;
+        const sample = () => {
+          const visible = panels.filter((panel) => Number(getComputedStyle(panel).opacity) > 0.1);
+          most = Math.max(most, visible.length);
+        };
+        const timer = setInterval(sample, 8);
+        let step = 0;
+        const next = () => {
+          if (step === ids.length) {
+            setTimeout(() => {
+              clearInterval(timer);
+              sample();
+              resolve(most);
+            }, 900);
+            return;
+          }
+          document.getElementById(ids[step++])?.scrollIntoView({ behavior: "instant" });
+          setTimeout(next, 900);
+        };
+        next();
+      }),
+    ["mymichlin", "nutritrack"],
+  );
+  // At least one proves the sampling saw the active panel; more than one is the overprint.
+  expect(mostVisible).toBe(1);
+});
+
+test("fits each project's words between the bar and the progress dots on a 600px-tall window", async ({ page }) => {
+  test.setTimeout(120_000);
+  // A 1366x768 laptop with a taskbar and a bookmarks bar leaves about this much window. The words are
+  // centred on the pinned screen, so a panel taller than the space between the bar and the dots
+  // slides under one of them.
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await waitForStage(page);
+  for (const [id, title] of [
+    ["probudget", "ProBudget"],
+    ["mymichlin", "MyMichlin"],
+    ["nutritrack", "NutriTrack"],
+  ]) {
+    await jumpTo(page, id);
+    await expect(activeTitle(page)).toHaveText(title);
+    // Wait for the cross-fade and its slide to finish, so the box is where it rests.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const style = getComputedStyle(document.querySelector('#work article[data-active="true"]')!);
+          return style.opacity === "1" && style.transform === "none";
+        }),
+      )
+      .toBe(true);
+    const room = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const panel = box('#work article[data-active="true"]');
+      return {
+        aboveBar: panel.top - box(".nav").bottom,
+        aboveDots: box('nav[aria-label="Projects"]').top - panel.bottom,
+      };
+    });
+    expect(room.aboveBar, `${title} clears the bar`).toBeGreaterThanOrEqual(0);
+    expect(room.aboveDots, `${title} clears the progress dots`).toBeGreaterThanOrEqual(0);
+  }
+});
+
 test("has no accessibility violations on the stage", async ({ page }) => {
   test.setTimeout(120_000);
   await waitForStage(page);

@@ -15,12 +15,12 @@ export function About() {
 
         <div className="reveal md:col-span-7">
           <p className="eyebrow">About</p>
-          <h2 className="headline mt-5">The other half of the job is talking to people.</h2>
+          <h2 className="title mt-5">The other half of the job is talking to people.</h2>
           <p className="lede mt-6 max-w-xl">
             I like standing between the people who build things and the people who use them:
             running the demo, turning a need into acceptance criteria, writing the handover pack.
           </p>
-          <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-ink-muted">
+          <p className="mt-5 max-w-xl text-[1.0625rem] leading-normal">
             As a Student Ambassador at Monash Open Day I answered unscripted questions about
             courses, majors and pathways, adapting the same information for school leavers, parents
             and international families.

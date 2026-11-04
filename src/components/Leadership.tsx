@@ -75,7 +75,7 @@ export function Leadership() {
         <div className="reveal mt-20 border-y border-hairline py-10 md:mt-28 md:py-14">
           <div className="team [--g:1rem] md:[--g:2.5rem]">
             <div className="flex flex-col items-center">
-              <span className="inline-flex items-center gap-2.5 rounded-full border border-hairline bg-paper-raised px-5 py-2.5 text-sm font-medium">
+              <span className="inline-flex items-center gap-2.5 rounded-full border border-hairline bg-paper-raised px-5 py-2.5 text-[0.9375rem] font-medium">
                 <span
                   className="keep-colour size-2 rounded-full"
                   style={{ background: "var(--hue-agencia)" }}
@@ -91,7 +91,7 @@ export function Leadership() {
               />
               <span className="team-hub rounded-full bg-ink px-6 py-3 text-center text-paper">
                 <span className="block font-semibold">David</span>
-                <span className="block text-xs">Team Lead and client liaison</span>
+                <span className="block text-[0.8125rem]">Team Lead and client liaison</span>
               </span>
               <span
                 className="team-line team-y h-7 w-px"
@@ -133,10 +133,10 @@ export function Leadership() {
                         />
                       ))}
                     </span>
-                    <span className="text-sm leading-snug font-medium md:text-base">
+                    <span className="text-[0.9375rem] leading-snug font-medium md:text-[1.0625rem]">
                       {group.count} {group.role.toLowerCase()}
                       {"note" in group && (
-                        <span className="block text-xs font-normal text-ink-muted md:text-sm">
+                        <span className="block text-[0.8125rem] font-normal text-ink-muted md:text-[0.9375rem]">
                           {group.note}
                         </span>
                       )}
@@ -152,7 +152,7 @@ export function Leadership() {
           {beats.map((beat) => (
             <div key={beat.verb} className="reveal-soft">
               <h3 className="title">{beat.verb}</h3>
-              <p className="mt-3 text-[1.0625rem] leading-relaxed text-ink-muted">{beat.text}</p>
+              <p className="mt-3 text-[1.0625rem] leading-normal">{beat.text}</p>
             </div>
           ))}
         </div>
@@ -192,7 +192,7 @@ export function Leadership() {
                 sizes="(min-width: 768px) 640px, 100vw"
                 className="mx-auto w-full max-w-xl rounded-xl border border-hairline"
               />
-              <p className="text-sm text-ink-muted">
+              <p className="text-[0.9375rem] text-ink-muted">
                 Screens show sample data only. Agencia Change’s product owner approved showing the
                 product this way; no client data appears anywhere on this site.
               </p>

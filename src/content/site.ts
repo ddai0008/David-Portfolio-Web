@@ -22,6 +22,7 @@ export type Hue = "agencia" | "probudget" | "mymichlin" | "nutritrack";
 export const navLinks = [
   { href: "#leadership", label: "Leadership" },
   { href: "#work", label: "Work" },
+  { href: "#education", label: "Education" },
   { href: "#about", label: "About" },
   { href: "#contact", label: "Contact" },
 ] as const;
@@ -79,12 +80,45 @@ export const matchingFlow = [
   { label: "Review", text: "Human review for the final merge decision" },
 ] as const;
 
-export const highDistinction = [
-  "Mobile Application Development",
-  "iOS Development",
-  "Web Database Interfaces",
-  "Object-Oriented Programming",
-] as const;
+// The High Distinction units the résumé lists, under the titles on the Monash academic record, with
+// the marks the résumé gives and the highest first. A unit still in progress is left out, so the
+// page never claims a result it cannot back up.
+export const highDistinction: readonly {
+  label: string;
+  units: readonly { name: string; mark?: number }[];
+}[] = [
+  {
+    label: "Software and IT",
+    units: [
+      { name: "iOS App Development", mark: 95 },
+      { name: "Industry Placement", mark: 89 },
+      { name: "Software Security", mark: 84 },
+      { name: "Mobile Application Development" },
+      { name: "Web Database Interface" },
+      { name: "Programming Fundamentals in Java" },
+    ],
+  },
+  {
+    label: "Data and analytics",
+    units: [
+      { name: "Data Analysis in Business", mark: 91 },
+      { name: "Introductory Econometrics", mark: 90 },
+      { name: "Predictive Analytics and Machine Learning" },
+      { name: "Business Forecasting" },
+      { name: "Data Visualisation and Analytics" },
+      { name: "Statistical Foundations of Business Analytics" },
+    ],
+  },
+];
+
+// The résumé calls these "working knowledge", so the page does too.
+export const workingKnowledge: readonly string[] = [
+  "Java",
+  "Python",
+  "Swift",
+  "Kotlin",
+  "Microsoft Dynamics",
+];
 
 export const skills = [
   {
