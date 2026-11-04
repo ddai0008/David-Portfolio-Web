@@ -19,7 +19,7 @@ export function Footer() {
             <ProfileLink kind="github" size={20} className="hit transition-opacity hover:opacity-70" />
           </li>
           <li>
-            <a href={`mailto:${person.email}`} className="hit underline-offset-4">
+            <a href={`mailto:${person.email}`} className="hit underline-offset-4 hover:underline">
               Email
             </a>
           </li>

@@ -26,7 +26,7 @@ export function Contact() {
 
           <a
             href={`mailto:${person.email}`}
-            className="hit mt-10 inline-block text-[clamp(1.25rem,4.4vw,2.75rem)] font-semibold tracking-[-0.022em] break-all text-ink underline decoration-hairline decoration-2 underline-offset-8 transition-colors hover:decoration-ink"
+            className="hit mt-10 inline-block text-[clamp(1.25rem,4.4vw,2.75rem)] font-semibold tracking-[-0.022em] break-all text-ink underline decoration-link decoration-2 underline-offset-8 transition-colors hover:text-link"
           >
             {person.email}
           </a>
