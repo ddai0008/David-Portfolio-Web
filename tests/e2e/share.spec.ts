@@ -151,13 +151,26 @@ function literal(buffer: Buffer, open: number) {
   return [...raw].map((byte) => marks[byte] ?? String.fromCharCode(byte)).join("");
 }
 
+// The last revision of object `number`. The number must start a token: "8 0 obj" is not the tail of
+// "178 0 obj", which a plain search would find, and a re-export can renumber everything.
+function lastObject(text: string, number: string) {
+  const found = [...text.matchAll(new RegExp(`(?<![0-9])${number}\\s+0\\s+obj`, "g"))].at(-1);
+  expect(found, `object ${number} is in the file`).toBeTruthy();
+  const start = found!.index!;
+  return { start, body: text.slice(start, text.indexOf("endobj", start)) };
+}
+
 async function readPdfProperties() {
   const buffer = await readFile("public/David_Dai_Resume.pdf");
   const text = buffer.toString("latin1"); // one character per byte, so a text index is a buffer index
-  const infoNumber = [...text.matchAll(/\/Info\s+(\d+)\s+0\s+R/g)].at(-1)?.[1];
+  const reference = (key: string) => [...text.matchAll(new RegExp(`/${key}\\s+(\\d+)\\s+0\\s+R`, "g"))].at(-1)?.[1];
+  const infoNumber = reference("Info");
   expect(infoNumber, "the PDF names an Info dictionary").toBeTruthy();
-  const start = text.lastIndexOf(`${infoNumber} 0 obj`);
-  const info = text.slice(start, text.indexOf("endobj", start));
+  const { start, body: info } = lastObject(text, infoNumber!);
+  // The language is read from the catalog, not from wherever the characters happen to appear.
+  const rootNumber = reference("Root");
+  expect(rootNumber, "the PDF names a catalog").toBeTruthy();
+  const catalog = lastObject(text, rootNumber!);
   const field = (key: string) => {
     const at = info.search(new RegExp(`/${key}\\s*\\(`));
     if (at < 0) return undefined;
@@ -170,7 +183,7 @@ async function readPdfProperties() {
     value.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
   const alt = (tag: string) =>
     unescape(xmp.match(new RegExp(`<dc:${tag}>[\\s\\S]*?<rdf:li[^>]*>([\\s\\S]*?)</rdf:li>`))?.[1] ?? "");
-  const lang = [...text.matchAll(/\/Lang\s*\(/g)].at(-1);
+  const lang = catalog.body.match(/\/Lang\s*\(/);
   return {
     info: { title: field("Title"), author: field("Author"), subject: field("Subject"), keywords: field("Keywords") },
     xmp: {
@@ -181,7 +194,7 @@ async function readPdfProperties() {
         (match) => unescape(match[1]),
       ),
     },
-    language: lang ? literal(buffer, lang.index! + lang[0].length - 1) : undefined,
+    language: lang ? literal(buffer, catalog.start + lang.index! + lang[0].length - 1) : undefined,
   };
 }
 
